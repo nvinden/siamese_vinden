@@ -68,7 +68,6 @@ def train(save_name):
 
             pair0 = pair_data['name0']
             pair1 = pair_data['name1']
-
             pair0.to(device)
             pair1.to(device)
 
@@ -76,6 +75,7 @@ def train(save_name):
 
             out_pair, _ = model(pair0, pair1)
 
+            print("pair0", pair0.device)
             print("out_pair", out_pair.device)
             print("target_pair", target_pair.device)
 
@@ -96,6 +96,7 @@ def train(save_name):
 
             out_master, _ = model(master0, master1)
 
+            print("master0", master0.device)
             print("out_master", out_master.device)
             print("target_master", target_master.device)
 
