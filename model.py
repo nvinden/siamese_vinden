@@ -99,8 +99,12 @@ class Siamese(nn.Module):
             h_0_out = [h_0[i, indexes_of_end_h0[i] - 2].unsqueeze(0) for i in range(len(h_0))]
             h_1_out = [h_1[i, indexes_of_end_h1[i] - 2].unsqueeze(0) for i in range(len(h_1))]
 
-            h_0_out = torch.cat(h_0_out, dim = 0, device = self.device)
-            h_1_out = torch.cat(h_1_out, dim = 0, device = self.device)
+            h_0_out = torch.cat(h_0_out, dim = 0)
+            h_1_out = torch.cat(h_1_out, dim = 0)
+
+            print("h_0", h_0.device)
+            print("indexes_of_end_h0", indexes_of_end_h0.device)
+            print("h_0_out", h_0_out.device)
         #   Bidirectional lstm and gru functions
         #   Designed from https://aclanthology.org/W16-1617.pdf
         elif self.A_name in ["lstm", "gru"] and self.bidirectional:
