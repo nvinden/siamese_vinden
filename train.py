@@ -79,11 +79,6 @@ def train(save_name):
 
             out_pair, _ = model(pair0, pair1)
 
-            print("model", model.device)
-            print("pair0", pair0.device)
-            print("out_pair", out_pair.device)
-            print("target_pair", target_pair.device)
-
             loss_pair = criterion(target_pair, out_pair)
             loss_pair.backward()
             optim.step()
@@ -100,10 +95,6 @@ def train(save_name):
             target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
 
             out_master, _ = model(master0, master1)
-
-            print("master0", master0.device)
-            print("out_master", out_master.device)
-            print("target_master", target_master.device)
 
             loss_master = criterion(target_master, out_master)
             loss_master.backward()
