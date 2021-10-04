@@ -61,6 +61,8 @@ class SiamesePairsDataset(Dataset):
         else:
             self.table = torch.load(processed_pair_file_path)
 
+        self.table.to(self.device)
+
     def __len__(self):
         return self.table.shape[0]
 
@@ -118,6 +120,8 @@ class SiameseMasterDataset(Dataset):
         #Loading preprcessed numpy saved datafile
         else:
             self.table = torch.load(processed_master_file_path)
+        
+        self.table.to(self.device)
 
     def __len__(self):
         return self.table.shape[0]
