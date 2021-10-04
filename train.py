@@ -56,11 +56,6 @@ def train(save_name):
     criterion = nn.MSELoss()
 
     model.to(device)
-    pair_loader_train.to(device)
-    pair_loader_test.to(device)
-    master_loader_train.to(device)
-    master_loader_test.to(device)
-
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
