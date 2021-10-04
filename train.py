@@ -12,6 +12,11 @@ from model import Siamese
 from process import save_data, load_data, add_to_log_list, load_json_config
 
 def train(save_name):
+    if torch.cuda.is_available():
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     save_file = os.path.join("saves", str(save_name))
     json_file = os.path.join("configs", str(save_name) + ".json")
 
@@ -48,13 +53,9 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
-    if torch.cuda.is_available():
-        torch.set_default_tensor_type(torch.cuda.FloatTensor)
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
     criterion = nn.MSELoss()
+
+    model.to(device)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
