@@ -75,6 +75,7 @@ def train(save_name):
 
             out_pair, _ = model(pair0, pair1)
 
+            print("model", model.device)
             print("pair0", pair0.device)
             print("out_pair", out_pair.device)
             print("target_pair", target_pair.device)
