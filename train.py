@@ -48,6 +48,9 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
+    if torch.cuda.is_available():
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -67,7 +70,7 @@ def train(save_name):
             pair0 = pair_data['name0']
             pair1 = pair_data['name1']
 
-            target_pair = torch.zeros([len(pair0)], dtype = torch.float)
+            target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
             out_pair, _ = model(pair0, pair1)
 
@@ -81,7 +84,7 @@ def train(save_name):
             master0 = master_data['name'][0:batch_size]
             master1 = master_data['name'][batch_size:]
 
-            target_master = torch.ones([len(pair0)], dtype = torch.float)
+            target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
 
             out_master, _ = model(master0, master1)
 
