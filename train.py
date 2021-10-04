@@ -31,10 +31,10 @@ def train(save_name):
     train_master, test_master = torch.utils.data.random_split(master_ds, [ttv_split_master[0], ttv_split_master[1]])
 
     pair_loader_train = DataLoader(train_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
-    #pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
+    pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
 
     master_loader_train = DataLoader(train_master, batch_size = 2 * TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
-    #master_loader_test = DataLoader(test_master, batch_size = 2 * TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
+    master_loader_test = DataLoader(test_master, batch_size = 2 * TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
 
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
@@ -56,9 +56,6 @@ def train(save_name):
 
         total_epoch_pair_loss = 0
         total_epoch_master_loss = 0
-
-        total_epoch_pair_test = 0
-        total_epoch_master_test = 0
 
         for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_train, master_loader_train)):
             #OPTIMIZING ON PAIR
@@ -93,32 +90,25 @@ def train(save_name):
             total_epoch_pair_loss += loss_pair
             total_epoch_master_loss += loss_master
 
-            if (batch_no + 1) % 10 == 0:
-                pass
-                #pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
-                #total_epoch_pair_test += pair_accuracy
-                #total_epoch_master_test += master_accuracy
-
         #PRINTING DIAGNOSTICS
         total_epoch_pair_loss /= (batch_no + 1)
         total_epoch_master_loss /= (batch_no + 1)
         total_epoch_average_loss = (total_epoch_pair_loss + total_epoch_master_loss) / 2
 
-        '''
-        total_epoch_pair_test = total_epoch_pair_test * 10 / (batch_no + 1)
-        total_epoch_master_test = total_epoch_master_test * 10 / (batch_no + 1)
-        total_epoch_average_test = (total_epoch_pair_test + total_epoch_master_test) / 2
-        '''
-
-        #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, total_epoch_pair_test, total_epoch_master_test, total_epoch_average_test)
-
         print(f"\nEpoch {epoch + 1}:")
         print(f"    Pair Loss: {total_epoch_pair_loss}")
         print(f"  Master Loss: {total_epoch_master_loss}")
         print(f"     Avg Loss: {total_epoch_average_loss}")
-        #print(f"    Pair Test: {total_epoch_pair_test}")
-        #print(f"  Master Test: {total_epoch_master_test}")
-        #print(f"     Avg Test: {total_epoch_average_test}")
+
+        if (epoch + 1) % 10 == 0:
+            pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
+            average_accuracy = (pair_accuracy + master_accuracy) / 2
+            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy)
+            print(f"    Pair Test: {pair_accuracy}")
+            print(f"  Master Test: {average_accuracy}")
+            print(f"     Avg Test: {average_accuracy}")
+        else:
+            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy)
         print(f" TIME: {time.time() - start_time} seconds")
 
         #SAVING

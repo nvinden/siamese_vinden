@@ -32,7 +32,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     return epoch, model, optim, log_list
 
-def add_to_log_list(log_list, pair_loss, master_loss, avg_loss):
+def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None, master_test = None, avg_test = None):
     if not "pair_loss" in log_list:
         log_list["pair_loss"] = list()
     if not "master_loss" in log_list:
@@ -49,9 +49,13 @@ def add_to_log_list(log_list, pair_loss, master_loss, avg_loss):
     log_list["pair_loss"].append(pair_loss)
     log_list["master_loss"].append(master_loss)
     log_list["avg_loss"].append(avg_loss)
-    log_list["pair_test"].append(pair_loss)
-    log_list["master_test"].append(master_loss)
-    log_list["avg_test"].append(avg_loss)
+
+    if pair_loss is not None:
+        log_list["pair_test"].append(pair_loss)
+    if master_loss is not None:
+        log_list["master_test"].append(master_loss)
+    if avg_loss is not None:
+        log_list["avg_test"].append(avg_loss)
 
 def load_json_config(path):
     with open(path) as f:
