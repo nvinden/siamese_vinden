@@ -38,7 +38,7 @@ class Siamese(nn.Module):
             self.embedding_function = self.normal_encode
 
         if self.A_name == "lstm":
-            self.A_function = nn.LSTM(**model_kwargs)
+            self.A_function = nn.LSTM(**model_kwargs, device = self.device)
         elif self.A_name == "gru":
             self.A_function = nn.GRU(**model_kwargs)
         elif self.A_name == "attention":

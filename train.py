@@ -83,7 +83,6 @@ def train(save_name):
             print("pair0", pair0.device)
             print("out_pair", out_pair.device)
             print("target_pair", target_pair.device)
-            print("criterion", criterion.device)
 
             loss_pair = criterion(target_pair, out_pair)
             loss_pair.backward()
