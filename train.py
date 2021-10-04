@@ -42,7 +42,6 @@ def train(save_name):
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
         model = Siamese(TRAIN_CONFIG, MODEL_KWARGS)
-        model.train()
 
         optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
         log_list = {}
@@ -61,6 +60,7 @@ def train(save_name):
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
+        model.requires_grad_()
         start_time = time.time()
 
         total_epoch_pair_loss = 0
@@ -83,6 +83,7 @@ def train(save_name):
             print("pair0", pair0.device)
             print("out_pair", out_pair.device)
             print("target_pair", target_pair.device)
+            print("criterion", criterion.device)
 
             loss_pair = criterion(target_pair, out_pair)
             loss_pair.backward()
