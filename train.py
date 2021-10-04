@@ -55,8 +55,7 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
-    for name, param in model.state_dict().items():
-        print(name, param)
+    test_on_test_set(model, pair_loader_test, master_loader_test)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -121,28 +120,30 @@ def train(save_name):
             print(f"    Pair Test: {pair_accuracy}")
             print(f"  Master Test: {average_accuracy}")
             print(f"     Avg Test: {average_accuracy}")
+
+            save_data(save_file, epoch, model, optim, log_list)
         else:
             add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
         print(f" TIME: {time.time() - start_time} seconds")
 
-        #SAVING
-        save_data(save_file, epoch, model, optim, log_list)
-
     return total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss
 
 def test_on_test_set(model, pair_loader_test, master_loader_test):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
     total_pair_mse = 0
     total_master_mse = 0
     for batch_no, (pair, master) in enumerate(zip(pair_loader_test, master_loader_test)):
         pair0 = pair['name0']
         pair1 = pair['name1']
+        pair0 = pair0.to(device)
+        pair1 = pair1.to(device)
 
         master0 = master['name'][0:len(pair0)]
         master1 = master['name'][len(pair0):]
         
-        target_master = torch.ones([len(pair0)], dtype = torch.float)
-        target_pair = torch.zeros([len(pair0)], dtype = torch.float)
+        target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
+        target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
         man_pair, (pair0_out, pair1_out) =  model(pair0, pair1)
         man_master, (master0_out, master1_out) = model(master0, master1)
