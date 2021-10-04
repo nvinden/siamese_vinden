@@ -48,6 +48,9 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
     criterion = nn.MSELoss()
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
@@ -108,7 +111,7 @@ def train(save_name):
             print(f"  Master Test: {average_accuracy}")
             print(f"     Avg Test: {average_accuracy}")
         else:
-            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy)
+            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
         print(f" TIME: {time.time() - start_time} seconds")
 
         #SAVING
@@ -150,7 +153,7 @@ if __name__ == '__main__':
     log_file_name = "log.txt"
     debug = False
 
-    print(torch.cuda.is_available())
+    print("GPU Available: " + str(torch.cuda.is_available()))
 
     with open(log_file_name, "a") as log:
         for config in config_list:
