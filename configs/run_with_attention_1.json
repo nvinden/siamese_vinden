@@ -1,0 +1,31 @@
+{
+    "DATASET_CONFIG": {
+        "data_root": "data/",
+        "string_pad": 32,
+        "ttv_split": [0.8, 0.2]
+    },
+
+    "TRAIN_CONFIG": {
+        "lr": 3e-4,
+        "n_epochs": 5,
+        "batch_size": 32, 
+        "A_name": "attention",
+        "embedding_type": "one_hot",
+        "n_tokens": 30
+    },
+
+    "MODEL_KWARGS": {
+        "TransformerEncoder": {
+            "num_layers": 6
+        },
+        "TransformerEncoderLayer": {
+            "d_model": 32,
+            "nhead": 8,
+            "dim_feedforward": 100,
+            "dropout": 0,
+            "activation": "relu",
+            "batch_first": true
+        },
+        "hidden_dim": 50
+    }
+}
