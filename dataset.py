@@ -70,9 +70,6 @@ class SiamesePairsDataset(Dataset):
         name0 = self.table[idx, 0]
         name1 = self.table[idx, 1]
 
-        print("name0 device", name0.device)
-        print("name1 device", name1.device)
-
         return {"name0": name0, "name1": name1}
 
 class SiameseMasterDataset(Dataset):
