@@ -69,6 +69,9 @@ def train(save_name):
             pair0 = pair_data['name0']
             pair1 = pair_data['name1']
 
+            pair0.to(device)
+            pair1.to(device)
+
             target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
             out_pair, _ = model(pair0, pair1)
@@ -85,6 +88,9 @@ def train(save_name):
 
             master0 = master_data['name'][0:batch_size]
             master1 = master_data['name'][batch_size:]
+
+            master0.to(device)
+            master1.to(device)
 
             target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
 
@@ -154,7 +160,6 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
 
     return total_pair_mse, total_master_mse
     
-        
 if __name__ == '__main__':
     config_list = ["run01", "run_with_gru_1", "run_with_attention_1"]
 
