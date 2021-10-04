@@ -12,8 +12,6 @@ from model import Siamese
 from process import save_data, load_data, add_to_log_list, load_json_config
 
 def train(save_name):
-    if torch.cuda.is_available():
-        torch.set_default_tensor_type(torch.cuda.FloatTensor)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
