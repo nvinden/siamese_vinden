@@ -56,6 +56,9 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    if device == "cuda:0":
+        model.cuda()
+
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         start_time = time.time()
