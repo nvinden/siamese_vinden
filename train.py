@@ -160,7 +160,7 @@ if __name__ == '__main__':
     config_list = ["run01", "run_with_gru_1", "run_with_attention_1"]
 
     log_file_name = "log.txt"
-    debug = False
+    debug = True
 
     print("GPU Available: " + str(torch.cuda.is_available()))
 
