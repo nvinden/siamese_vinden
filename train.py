@@ -54,6 +54,7 @@ def train(save_name):
     criterion = nn.MSELoss()
 
     model = model.to(device)
+    criterion = criterion.to(device)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
