@@ -1,5 +1,5 @@
 import torch
-import torch.nn as torch
+import torch.nn as nn
 import os
 import csv
 import numpy as np
@@ -8,12 +8,13 @@ from torch.utils.data import Dataset
 
 class SiamesePairsDataset(Dataset):
     def __init__(self, config, reprocess : bool = False):
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.data_root = config['data_root']
         self.string_pad = config['string_pad']
         self.table = list()
 
         unprocessed_pair_file_path = os.path.join(self.data_root, "records25k_data.tsv")
-        processed_pair_file_path = os.path.join(self.data_root, "records25k_data_processed.npy")
+        processed_pair_file_path = os.path.join(self.data_root, "records25k_data_processed.pt")
         #Reprosses records25k_data into records25k_data_processed
         if not os.path.isfile(processed_pair_file_path) or reprocess == True:
             with open(unprocessed_pair_file_path) as fd:
@@ -38,12 +39,27 @@ class SiamesePairsDataset(Dataset):
 
                     self.table.append(pair)
                 
-                self.table = np.array(self.table, dtype = str)
+                table = np.array(self.table, dtype = str)
 
-                np.save(processed_pair_file_path, self.table)
+                torch_table = torch.zeros((len(table), 2, self.string_pad), device = self.device, dtype = torch.uint8)
+                for i, word in enumerate(table):
+                    for k, word_spec in enumerate(word):
+                        for j, char in enumerate(word_spec):
+                            if char == "<":
+                                torch_table[i, k, j] = 30
+                            elif char == ">":
+                                torch_table[i, k, j] = 31
+                            elif char == "*":
+                                torch_table[i, k, j] = 32
+                            else:
+                                torch_table[i, k, j] = ord(char) - 97
+
+                self.table = torch_table
+                
+                torch.save(self.table, processed_pair_file_path)
         #Loading preprcessed numpy saved datafile
         else:
-            self.table = np.load(processed_pair_file_path)
+            self.table = torch.load(processed_pair_file_path)
 
     def __len__(self):
         return self.table.shape[0]
@@ -56,12 +72,13 @@ class SiamesePairsDataset(Dataset):
 
 class SiameseMasterDataset(Dataset):
     def __init__(self, config, reprocess : bool = False):
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.data_root = config['data_root']
         self.string_pad = config['string_pad']
         self.table = list()
 
         unprocessed_master_file_path = os.path.join(self.data_root, "records_surnames_counts_250k.tsv")
-        processed_master_file_path = os.path.join(self.data_root, "records_surnames_counts_250k_processed.npy")
+        processed_master_file_path = os.path.join(self.data_root, "records_surnames_counts_250k_processed.pt")
 
         #Reprosses records25k_data into records25k_data_processed
         if not os.path.isfile(processed_master_file_path) or reprocess == True:
@@ -81,12 +98,26 @@ class SiameseMasterDataset(Dataset):
 
                     self.table.append(name)
                 
-                self.table = np.array(self.table, dtype = str)
+                table = np.array(self.table, dtype = str)
 
-                np.save(processed_master_file_path, self.table)
+                torch_table = torch.zeros((len(table), self.string_pad), device = self.device, dtype = torch.uint8)
+                for i, word in enumerate(table):
+                    for j, char in enumerate(word):
+                        if char == "<":
+                            torch_table[i, j] = 30
+                        elif char == ">":
+                            torch_table[i, j] = 31
+                        elif char == "*":
+                            torch_table[i, j] = 32
+                        else:
+                            torch_table[i, j] = ord(char) - 97
+
+                self.table = torch_table
+                
+                torch.save(self.table, processed_master_file_path)
         #Loading preprcessed numpy saved datafile
         else:
-            self.table = np.load(processed_master_file_path)
+            self.table = torch.load(processed_master_file_path)
 
     def __len__(self):
         return self.table.shape[0]

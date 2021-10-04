@@ -69,9 +69,6 @@ def train(save_name):
             pair0 = pair_data['name0']
             pair1 = pair_data['name1']
 
-            pair0 = torch.from_numpy(pair0).to(device)
-            pair1 = torch.from_numpy(pair1).to(device)
-
             target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
             out_pair, _ = model(pair0, pair1)

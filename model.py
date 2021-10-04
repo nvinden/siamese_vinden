@@ -9,15 +9,15 @@ import math
 class Siamese(nn.Module):
     def __init__(self, config, model_kwargs):
         super(Siamese, self).__init__()
-
-        if torch.cuda.is_available():
-            torch.set_default_tensor_type(torch.cuda.FloatTensor)
-
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         self.A_name = config["A_name"]
         self.embedding_type = config["embedding_type"]
         self.n_tokens = config["n_tokens"]
+
+        self.START = 30
+        self.END = 31
+        self.PAD = 32
 
         assert self.A_name in ["lstm", "gru", "attention"]
         assert self.embedding_type in ["one_hot", "normal"]
@@ -56,10 +56,15 @@ class Siamese(nn.Module):
         out_vector = torch.zeros([self.batch_size, self.n_tokens, self.input_dim], dtype = torch.float, device = self.device)
 
         for i, word in enumerate(seq):
-            word = word[1:word.find(">")]
+            buffer = 0
             for j, char in enumerate(word):
-                char_value = ord('z') - 97
-                out_vector[i, j, char_value] = 1
+                char = char.item()
+                if char == self.END:
+                    break
+                elif char == self.START:
+                    buffer += 1
+                    continue
+                out_vector[i, j - buffer, char] = 1
 
         return out_vector
 
@@ -88,8 +93,11 @@ class Siamese(nn.Module):
             h_0, _ = self.A_function(seq0_embedded)
             h_1, _ = self.A_function(seq1_embedded)
 
-            h_0_out = [h_0[i, seq0[i].find(">") - 2].unsqueeze(0) for i in range(len(h_0))]
-            h_1_out = [h_1[i, seq1[i].find(">") - 2].unsqueeze(0) for i in range(len(h_1))]
+            indexes_of_end_h0 = (seq0 == self.END).nonzero()[:, 1]
+            indexes_of_end_h1 = (seq1 == self.END).nonzero()[:, 1]
+
+            h_0_out = [h_0[i, indexes_of_end_h0[i] - 2].unsqueeze(0) for i in range(len(h_0))]
+            h_1_out = [h_1[i, indexes_of_end_h1[i] - 2].unsqueeze(0) for i in range(len(h_1))]
 
             h_0_out = torch.cat(h_0_out, dim = 0)
             h_1_out = torch.cat(h_1_out, dim = 0)
