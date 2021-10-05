@@ -17,12 +17,13 @@ def save_data(path, epoch, model, optimizer, log_list):
     print(f"Saved run successfully at {path}")
 
 def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data = torch.load(path)
 
     epoch = data['epoch']
     log_list = data['log_list']
 
-    model = Siamese(TRAIN_CONFIG, MODEL_KWARGS)
+    model = Siamese(TRAIN_CONFIG, MODEL_KWARGS).to(device)
     model.load_state_dict(data['model_state_dict'])
 
     optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
