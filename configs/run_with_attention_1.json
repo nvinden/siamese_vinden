@@ -16,7 +16,7 @@
 
     "MODEL_KWARGS": {
         "TransformerEncoder": {
-            "num_layers": 6
+            "num_layers": 3
         },
         "TransformerEncoderLayer": {
             "d_model": 32,
