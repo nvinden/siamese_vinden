@@ -55,8 +55,6 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
-    test_on_test_set(model, pair_loader_test, master_loader_test)
-
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -118,7 +116,7 @@ def train(save_name):
             average_accuracy = (pair_accuracy + master_accuracy) / 2
             add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy)
             print(f"    Pair Test: {pair_accuracy}")
-            print(f"  Master Test: {average_accuracy}")
+            print(f"  Master Test: {master_accuracy}")
             print(f"     Avg Test: {average_accuracy}")
 
             save_data(save_file, epoch, model, optim, log_list)
@@ -159,7 +157,7 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
     return total_pair_mse, total_master_mse
     
 if __name__ == '__main__':
-    config_list = ["run01", "run_with_gru_1", "run_with_attention_1"]
+    config_list = ["run_with_attention_1", ]
 
     log_file_name = "log.txt"
     debug = True
