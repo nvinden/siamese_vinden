@@ -75,7 +75,7 @@ def train(save_name):
 
             inp = [result[inp_batch_no, character] for inp_batch_no, character in enumerate(replace_list)]
             inp = torch.stack(inp, dim = 0)
-            target = torch.LongTensor(replace_list)
+            target = torch.LongTensor(replace_list, device = device)
 
             loss = criterion(inp, target)
 
