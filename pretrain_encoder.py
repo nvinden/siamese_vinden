@@ -75,7 +75,11 @@ def train(save_name):
 
             inp = [result[inp_batch_no, character] for inp_batch_no, character in enumerate(replace_list)]
             inp = torch.stack(inp, dim = 0)
-            target = torch.LongTensor(replace_list, device = device)
+
+            if torch.cuda.is_available():
+                target = torch.cuda.LongTensor(replace_list)
+            else:
+                target = torch.LongTensor(replace_list)
 
             loss = criterion(inp, target)
 
