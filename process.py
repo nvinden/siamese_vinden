@@ -66,6 +66,7 @@ def load_json_config(path):
     return data["DATASET_CONFIG"], data["TRAIN_CONFIG"], data["MODEL_KWARGS"]
 
 def create_pretrained_vectors(model, embeddings):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     embeddings_in = torch.clone(embeddings)
     embeddings_truth = torch.clone(embeddings)
@@ -78,10 +79,10 @@ def create_pretrained_vectors(model, embeddings):
         while str_len[char_index].nelement() != 0:
             char_index += 1
 
-        start_row = torch.zeros([curr_name.shape[1]])
+        start_row = torch.zeros([curr_name.shape[1]], device = device)
         start_row[model.START] = 1
 
-        end_row = torch.zeros([curr_name.shape[1]])
+        end_row = torch.zeros([curr_name.shape[1]], device = device)
         end_row[model.END] = 1
 
         curr_name = torch.cat([start_row.unsqueeze(0), curr_name])
@@ -94,7 +95,7 @@ def create_pretrained_vectors(model, embeddings):
         index_to_replace = randrange(char_index) + 1
         replace_list.append(index_to_replace)
 
-        curr_name[index_to_replace] = torch.ones(curr_name[index_to_replace].shape)
+        curr_name[index_to_replace] = torch.ones(curr_name[index_to_replace].shape, device = device)
 
         embeddings_in[i] = curr_name
 
