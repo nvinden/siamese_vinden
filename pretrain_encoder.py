@@ -86,8 +86,6 @@ def train(save_name):
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
 
-            print(f"BATCH DONE: {batch_no + 1}")
-
         total_epoch_loss /= (batch_no + 1)
 
         #PRINTING DIAGNOSTICS

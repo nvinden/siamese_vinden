@@ -98,8 +98,8 @@ def train(save_name):
             optim.step()
 
             #ADDING TO DIAGNOSTICS
-            total_epoch_pair_loss += loss_pair
-            total_epoch_master_loss += loss_master
+            total_epoch_pair_loss += loss_pair.item()
+            total_epoch_master_loss += loss_master.item()
 
         #PRINTING DIAGNOSTICS
         total_epoch_pair_loss /= (batch_no + 1)
