@@ -82,6 +82,11 @@ def train(save_name):
                 target = torch.LongTensor(replace_list)
 
             loss = criterion(inp, target)
+            loss.backward()
+            optim.step()
+
+            if (batch_no + 1) % 500 == 0:
+                print(batch_no + 1)
 
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
@@ -121,6 +126,8 @@ def train(save_name):
         print(f" TIME: {time.time() - start_time} seconds")
 
     return total_epoch_loss
+
+
 
 if __name__ == '__main__':
     config_list = ["pretrained_encoder", ]
