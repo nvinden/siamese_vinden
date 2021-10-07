@@ -84,7 +84,7 @@ def train(save_name):
             loss = criterion(inp, target)
 
             #ADDING TO DIAGNOSTICS
-            total_epoch_loss += loss
+            total_epoch_loss += loss.item()
 
             print(f"BATCH DONE: {batch_no + 1}")
 
@@ -122,7 +122,7 @@ def train(save_name):
 
         print(f" TIME: {time.time() - start_time} seconds")
 
-    return total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy
+    return total_epoch_loss
 
 if __name__ == '__main__':
     config_list = ["pretrained_encoder", ]
