@@ -7,9 +7,9 @@ import time
 import os
 from datetime import datetime
 
-from dataset import SiamesePairsDataset, SiameseMasterDataset
+from dataset import PretrainDataset
 from model import Siamese
-from process import save_data, load_data, add_to_log_list, load_json_config
+from process import save_data, load_data, add_to_log_list, load_json_config, create_pretrained_vectors
 
 def train(save_name):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -21,23 +21,9 @@ def train(save_name):
     DATASET_CONFIG, TRAIN_CONFIG, MODEL_KWARGS = load_json_config(json_file)
 
     #CREATING DATASETS
-    pair_ds = SiamesePairsDataset(DATASET_CONFIG)
-    master_ds = SiameseMasterDataset(DATASET_CONFIG)
-
+    ds = PretrainDataset(DATASET_CONFIG)
     batch_size = TRAIN_CONFIG['batch_size']
-
-    ttv_split = DATASET_CONFIG["ttv_split"]
-    ttv_split_pair = [int(len(pair_ds) * elem) for elem in ttv_split]
-    ttv_split_master = [len(master_ds) - ttv_split_pair[1] * 2, ttv_split_pair[1] * 2]
-
-    train_pair, test_pair = torch.utils.data.random_split(pair_ds, [ttv_split_pair[0], ttv_split_pair[1]])
-    train_master, test_master = torch.utils.data.random_split(master_ds, [ttv_split_master[0], ttv_split_master[1]])
-
-    pair_loader_train = DataLoader(train_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
-    pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
-
-    master_loader_train = DataLoader(train_master, batch_size = 2 * TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
-    master_loader_test = DataLoader(test_master, batch_size = 2 * TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
+    dl = DataLoader(ds, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
 
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
@@ -50,58 +36,56 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
-    criterion = nn.MSELoss()
+
+    #decimal chance each character is used in the syllabus
+    char_percentage =  [0.08123, 0.02908, 0.03494, 0.03206, 0.12481, 0.01547, 0.02865, \
+            0.03937, 0.05963, 0.00245, 0.02553, 0.06997, 0.03321, 0.07405, 0.05787, 0.01605, \
+            0.00093, 0.08325, 0.05979, 0.0524, 0.02932, 0.00847, 0.01545, 0.00112, 0.01805, \
+            0.00682, 0, 0, 0, 0, 0, 0]
+    char_percentage = torch.FloatTensor(char_percentage)
+    char_percentage.requires_grad_(False)
+    criterion = nn.NLLLoss(weight = char_percentage)
 
     model = model.to(device)
     criterion = criterion.to(device)
+
+    encoder = model.A_function
+    embedding_func = model.embedding_function
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
         start_time = time.time()
 
-        total_epoch_pair_loss = 0
-        total_epoch_master_loss = 0
+        total_epoch_loss = 0
 
-        for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_train, master_loader_train)):
+        for batch_no, data in enumerate(dl):
             #OPTIMIZING ON PAIR
             optim.zero_grad()
 
-            pair0 = pair_data['name0']
-            pair1 = pair_data['name1']
-            pair0.to(device)
-            pair1.to(device)
+            name = data['name']
+            name.to(device)
 
-            target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
+            embeddings = embedding_func(name)
 
-            out_pair, _ = model(pair0, pair1)
+            embeddings_in, embeddings_truth, replace_list = create_pretrained_vectors(model, embeddings)
 
-            loss_pair = criterion(target_pair, out_pair)
-            loss_pair.backward()
-            optim.step()
+            result = encoder(embeddings_in)
+            result = F.log_softmax(result, dim = 2)
 
-            #OPTIMIZING ON MASTER
-            optim.zero_grad()
+            inp = [result[inp_batch_no, character] for inp_batch_no, character in enumerate(replace_list)]
+            inp = torch.stack(inp, dim = 0)
+            target = torch.LongTensor(replace_list)
 
-            master0 = master_data['name'][0:batch_size]
-            master1 = master_data['name'][batch_size:]
-
-            master0.to(device)
-            master1.to(device)
-
-            target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
-
-            out_master, _ = model(master0, master1)
-
-            loss_master = criterion(target_master, out_master)
-            loss_master.backward()
-            optim.step()
+            loss = criterion(inp, target)
 
             #ADDING TO DIAGNOSTICS
-            total_epoch_pair_loss += loss_pair
-            total_epoch_master_loss += loss_master
+            total_epoch_loss += loss
+
+        total_epoch_loss /= (batch_no + 1)
 
         #PRINTING DIAGNOSTICS
+        '''
         total_epoch_pair_loss /= (batch_no + 1)
         total_epoch_master_loss /= (batch_no + 1)
         total_epoch_average_loss = (total_epoch_pair_loss + total_epoch_master_loss) / 2
@@ -110,7 +94,11 @@ def train(save_name):
         print(f"    Pair Loss: {total_epoch_pair_loss}")
         print(f"  Master Loss: {total_epoch_master_loss}")
         print(f"     Avg Loss: {total_epoch_average_loss}")
+        '''
+        print(f"\nEpoch {epoch + 1}:")
+        print(f"         Loss: {total_epoch_loss}")
 
+        '''
         if (epoch + 1) % 10 == 0:
             pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
             average_accuracy = (pair_accuracy + master_accuracy) / 2
@@ -122,46 +110,19 @@ def train(save_name):
             save_data(save_file, epoch, model, optim, log_list)
         else:
             add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
+        '''
+
+        save_data(save_file, epoch, model, optim, log_list)
 
         print(f" TIME: {time.time() - start_time} seconds")
 
     return total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy
 
-def test_on_test_set(model, pair_loader_test, master_loader_test):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model.eval()
-    total_pair_mse = 0
-    total_master_mse = 0
-    for batch_no, (pair, master) in enumerate(zip(pair_loader_test, master_loader_test)):
-        pair0 = pair['name0']
-        pair1 = pair['name1']
-        pair0 = pair0.to(device)
-        pair1 = pair1.to(device)
-
-        master0 = master['name'][0:len(pair0)]
-        master1 = master['name'][len(pair0):]
-        
-        target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
-        target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
-
-        man_pair, (pair0_out, pair1_out) =  model(pair0, pair1)
-        man_master, (master0_out, master1_out) = model(master0, master1)
-
-        mse_pair = F.mse_loss(man_pair, target_pair)
-        mse_master = F.mse_loss(man_master, target_master)
-
-        total_pair_mse += mse_pair
-        total_master_mse += mse_master
-    total_pair_mse /= (batch_no + 1)
-    total_master_mse /= (batch_no + 1)
-
-    return total_pair_mse, total_master_mse
-
 if __name__ == '__main__':
-    config_list = ["run02", ]
+    config_list = ["pretrained_encoder", ]
 
     log_file_name = "log.txt"
-    debug = False
+    debug = True
 
     print("GPU Available: " + str(torch.cuda.is_available()))
 

@@ -11,6 +11,8 @@ class Siamese(nn.Module):
         super(Siamese, self).__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        self.batch_size = 32
+
         self.A_name = config["A_name"]
         self.embedding_type = config["embedding_type"]
         self.n_tokens = config["n_tokens"]
@@ -53,7 +55,7 @@ class Siamese(nn.Module):
             self.attention_linear = nn.Linear(self.input_dim * self.n_tokens, self.hidden_dim)
 
     def one_hot_encode(self, seq):
-        out_vector = torch.zeros([self.batch_size, self.n_tokens, self.input_dim], dtype = torch.float, device = self.device)
+        out_vector = torch.zeros([seq.shape[0], self.n_tokens, self.input_dim], dtype = torch.float, device = self.device)
 
         for i, word in enumerate(seq):
             buffer = 0

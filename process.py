@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from model import Siamese
 
 import json
+from random import randrange
 
 def save_data(path, epoch, model, optimizer, log_list):
     torch.save({
@@ -63,3 +64,38 @@ def load_json_config(path):
         data = json.load(f)
 
     return data["DATASET_CONFIG"], data["TRAIN_CONFIG"], data["MODEL_KWARGS"]
+
+def create_pretrained_vectors(model, embeddings):
+
+    embeddings_in = torch.clone(embeddings)
+    embeddings_truth = torch.clone(embeddings)
+    replace_list = list()
+
+    for i, curr_name in enumerate(embeddings_in):
+        str_len = [torch.nonzero(row) for row in curr_name]
+        
+        char_index = 0
+        while str_len[char_index].nelement() != 0:
+            char_index += 1
+
+        start_row = torch.zeros([curr_name.shape[1]])
+        start_row[model.START] = 1
+
+        end_row = torch.zeros([curr_name.shape[1]])
+        end_row[model.END] = 1
+
+        curr_name = torch.cat([start_row.unsqueeze(0), curr_name])
+        curr_name[char_index + 1] = end_row
+
+        curr_name = curr_name[:-1]
+
+        embeddings_truth[i] = curr_name
+
+        index_to_replace = randrange(char_index) + 1
+        replace_list.append(index_to_replace)
+
+        curr_name[index_to_replace] = torch.ones(curr_name[index_to_replace].shape)
+
+        embeddings_in[i] = curr_name
+
+    return embeddings_in, embeddings_truth, replace_list

@@ -130,3 +130,29 @@ class SiameseMasterDataset(Dataset):
         name = self.table[idx]
 
         return {"name": name}
+
+class PretrainDataset(Dataset):
+    def __init__(self, config, reprocess : bool = False):
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.data_root = config['data_root']
+        self.string_pad = config['string_pad']
+        self.table = list()
+
+        processed_master_file_path = os.path.join(self.data_root, "records_surnames_counts_250k_processed.pt")
+        processed_pair_file_path = os.path.join(self.data_root, "records25k_data_processed.pt")
+        processed_pretrain_file_path = os.path.join(self.data_root, "pretrain_dataset.pt")
+
+        pair_table = torch.load(processed_pair_file_path)
+        master_table = torch.load(processed_master_file_path)
+        
+        pair_table = torch.cat([pair_table[:, 0, :], pair_table[:, 1, :]], dim = 0)
+
+        self.table = torch.cat([master_table, pair_table])
+
+    def __len__(self):
+        return self.table.shape[0]
+
+    def __getitem__(self, idx):
+        name = self.table[idx]
+
+        return {"name": name}

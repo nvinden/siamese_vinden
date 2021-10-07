@@ -1,0 +1,36 @@
+2021-10-06 15:34:30.806938
+run02: training failure
+torch.cat(): Sizes of tensors must match except in dimension 0. Got 30 and 60 in dimension 1 (The offending index is 1)
+
+2021-10-06 15:35:42.754025
+run02: training failure
+torch.cat(): Sizes of tensors must match except in dimension 0. Got 30 and 60 in dimension 1 (The offending index is 1)
+
+2021-10-06 16:06:37.812807
+run02: training failure
+name 'pair_ds' is not defined
+
+2021-10-06 16:06:56.496193
+pretrained_encoder.json: training failure
+[Errno 2] No such file or directory: 'configs/pretrained_encoder.json.json'
+
+2021-10-06 16:23:16.543230
+pretrained_encoder: training failure
+'name0'
+
+2021-10-06 16:23:41.554698
+pretrained_encoder: training failure
+'name0'
+
+2021-10-06 16:24:26.082193
+pretrained_encoder: training failure
+'name0'
+
+2021-10-06 16:24:41.594985
+pretrained_encoder: training failure
+'name0'
+
+2021-10-06 16:25:34.599775
+pretrained_encoder: training failure
+'Siamese' object has no attribute 'batch_size'
+
