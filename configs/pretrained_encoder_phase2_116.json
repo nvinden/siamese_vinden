@@ -14,7 +14,7 @@
         "embedding_type": "one_hot",
         "n_tokens": 30,
         "attention_lock_encoder_epochs": 20,
-        "scheduler_step_size": 5,
+        "scheduler_step_size": 3,
         "scheduler_gamma": 0.9
     },
 
