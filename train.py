@@ -137,7 +137,7 @@ def train(save_name):
             print(f"  Master Test: {master_accuracy}")
             print(f"     Avg Test: {average_accuracy}")
 
-            #save_data(save_file, epoch, model, optim, log_list)
+            save_data(save_file, epoch, model, optim, log_list)
         else:
             add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
 
