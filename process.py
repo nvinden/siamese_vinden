@@ -28,11 +28,14 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
     model = Siamese(TRAIN_CONFIG, MODEL_KWARGS).to(device)
     model.load_state_dict(data['model_state_dict'])
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optim, TRAIN_CONFIG['scheduler_step_size'], gamma=TRAIN_CONFIG["scheduler_gamma"])
-    scheduler.load_state_dict(data['scheduler_state_dict'])
-
     optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
     optim.load_state_dict(data['optimizer_state_dict'])
+
+    if 'scheduler_state_dict' in data:
+        scheduler = torch.optim.lr_scheduler.StepLR(optim, TRAIN_CONFIG['scheduler_step_size'], gamma=TRAIN_CONFIG['scheduler_gamma'])
+        scheduler.load_state_dict(data['scheduler_state_dict'])
+    else:
+        scheduler = None
 
     print(f"Loaded run successfully from {path}")
 
