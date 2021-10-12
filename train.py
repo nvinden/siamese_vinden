@@ -59,6 +59,10 @@ def train(save_name):
 
     total_epoch_pair_loss = 0
     total_epoch_master_loss = 0
+    total_epoch_average_loss = 0
+    pair_accuracy = 0 
+    master_accuracy = 0
+    average_accuracy = 0
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
