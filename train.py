@@ -12,6 +12,8 @@ from model import Siamese
 from process import save_data, load_data, add_to_log_list, load_json_config
 
 def train(save_name):
+    torch.manual_seed(0)
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"CURRENT DEVICE: {device}")
 
@@ -30,16 +32,8 @@ def train(save_name):
     ttv_split_pair = [int(len(pair_ds) * elem) for elem in ttv_split]
     ttv_split_master = [len(master_ds) - ttv_split_pair[1] * 2, ttv_split_pair[1] * 2]
 
-    train_pair = pair_ds[:ttv_split_pair[0]]
-    test_pair = pair_ds[ttv_split_pair[0]:]
-
-    train_master = master_ds[:ttv_split_master[0]]
-    test_master = master_ds[ttv_split_master[0]:]
-
-    assert len(train_pair['name0']) == ttv_split_pair[0]
-    assert len(test_pair['name0']) == ttv_split_pair[1]
-    assert len(train_master['name']) == ttv_split_master[0]
-    assert len(test_master['name']) == ttv_split_master[1]
+    train_pair, test_pair = torch.utils.data.random_split(pair_ds, [ttv_split_pair[0], ttv_split_pair[1]])
+    train_master, test_master = torch.utils.data.random_split(master_ds, [ttv_split_master[0], ttv_split_master[1]])
 
     pair_loader_train = DataLoader(train_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
     pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
@@ -178,9 +172,10 @@ if __name__ == '__main__':
             start_time = time.time()
 
             if debug == True:
-                total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss = train(config)
+                total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, total_accuracy = train(config)
                 text_out = f"{datetime.now()}\n{config}: training complete\nTime: {time.time() - start_time}\nPair Loss: {total_epoch_pair_loss} \
-                    \nMaster Loss: {total_epoch_master_loss}\nAverage Loss: {total_epoch_average_loss}\n"
+                        \nMaster Loss: {total_epoch_master_loss}\nAverage Loss: {total_epoch_average_loss}\nPair Accuracy: {pair_accuracy}\n\
+                        Master Accuracy: {master_accuracy}\nAverage Accuracy: {total_accuracy}\n"
             else:
                 try:
                     total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, total_accuracy = train(config)

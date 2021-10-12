@@ -103,3 +103,11 @@ Average Loss: 0.22942054271697998
 run02: training failure
 
 
+2021-10-12 11:32:59.800695
+pretrained_encoder_phase2_116: training failure
+list indices must be integers or slices, not str
+
+2021-10-12 11:33:40.904171
+pretrained_encoder_phase2_116: training failure
+list indices must be integers or slices, not str
+
