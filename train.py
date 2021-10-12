@@ -107,7 +107,7 @@ def train(save_name):
             master0.to(device)
             master1.to(device)
 
-            target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
+            target_master = torch.ones([len(master0)], dtype = torch.float, device = device)
 
             out_master, _ = model(master0, master1)
 
