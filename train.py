@@ -60,6 +60,8 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
+
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -145,18 +147,15 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
 
         master0 = master['name'][0:len(pair0)]
         master1 = master['name'][len(pair0):]
-        
-        target_master = torch.ones([len(pair0)], dtype = torch.float, device = device)
-        target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
-        man_pair, (pair0_out, pair1_out) =  model(pair0, pair1)
-        man_master, (master0_out, master1_out) = model(master0, master1)
+        man_pair, _ =  model(pair0, pair1)
+        man_master, _ = model(master0, master1)
 
-        mse_pair = F.mse_loss(man_pair, target_pair)
-        mse_master = F.mse_loss(man_master, target_master)
+        pair_sum = torch.sum(man_pair <= 0.5)
+        master_sun = torch.sum(man_master >= 0.5)
 
-        total_pair_mse += mse_pair
-        total_master_mse += mse_master
+        total_pair_mse += mse_pair.item()
+        total_master_mse += mse_master.item()
     total_pair_mse /= (batch_no + 1)
     total_master_mse /= (batch_no + 1)
 
