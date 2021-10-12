@@ -154,8 +154,8 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
         pair_sum = torch.sum(man_pair <= 0.5)
         master_sun = torch.sum(man_master >= 0.5)
 
-        total_pair_mse += mse_pair.item()
-        total_master_mse += mse_master.item()
+        total_pair_mse += pair_sum.item()
+        total_master_mse += master_sun.item()
     total_pair_mse /= (batch_no + 1)
     total_master_mse /= (batch_no + 1)
 
