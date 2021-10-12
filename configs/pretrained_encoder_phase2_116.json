@@ -13,7 +13,9 @@
         "A_name": "attention",
         "embedding_type": "one_hot",
         "n_tokens": 30,
-        "attention_lock_encoder_epochs": 20
+        "attention_lock_encoder_epochs": 20,
+        "scheduler_step_size": 5,
+        "scheduler_gamma": 0.9
     },
 
     "MODEL_KWARGS": {

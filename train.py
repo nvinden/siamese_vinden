@@ -46,15 +46,17 @@ def train(save_name):
         model = Siamese(TRAIN_CONFIG, MODEL_KWARGS)
 
         optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
+        scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
         log_list = {}
 
         start_epoch = 0
     else:
-        start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
+        start_epoch, model, optim, scheduler, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
-        if TRAIN_CONFIG['epoch_reset']:
+        if 'epoch_reset' in TRAIN_CONFIG and TRAIN_CONFIG['epoch_reset']:
             start_epoch = 0
             optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
 
     criterion = nn.MSELoss()
 
@@ -119,6 +121,8 @@ def train(save_name):
             total_epoch_pair_loss += loss_pair.item()
             total_epoch_master_loss += loss_master.item()
 
+        scheduler.step()
+
         #PRINTING DIAGNOSTICS
         total_epoch_pair_loss /= (batch_no + 1)
         total_epoch_master_loss /= (batch_no + 1)
@@ -137,7 +141,7 @@ def train(save_name):
             print(f"  Master Test: {master_accuracy}")
             print(f"     Avg Test: {average_accuracy}")
 
-            save_data(save_file, epoch, model, optim, log_list)
+            save_data(save_file, epoch, model, optim, scheduler, log_list)
         else:
             add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
 
