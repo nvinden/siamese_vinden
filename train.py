@@ -56,7 +56,7 @@ def train(save_name):
         if 'epoch_reset' in TRAIN_CONFIG and TRAIN_CONFIG['epoch_reset']:
             start_epoch = 0
             optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
+            scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
 
     criterion = nn.MSELoss()
 
