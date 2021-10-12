@@ -54,6 +54,8 @@ class SiamesePairsDataset(Dataset):
                             else:
                                 torch_table[i, k, j] = ord(char) - 97
 
+                torch_table = torch_table[torch.randperm(torch_table.size()[0])]
+
                 self.table = torch_table
                 
                 torch.save(self.table, processed_pair_file_path)
@@ -113,6 +115,8 @@ class SiameseMasterDataset(Dataset):
                             torch_table[i, j] = 32
                         else:
                             torch_table[i, j] = ord(char) - 97
+
+                torch_table = torch_table[torch.randperm(torch_table.size()[0])]
 
                 self.table = torch_table
                 

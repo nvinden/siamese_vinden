@@ -30,8 +30,16 @@ def train(save_name):
     ttv_split_pair = [int(len(pair_ds) * elem) for elem in ttv_split]
     ttv_split_master = [len(master_ds) - ttv_split_pair[1] * 2, ttv_split_pair[1] * 2]
 
-    train_pair, test_pair = torch.utils.data.random_split(pair_ds, [ttv_split_pair[0], ttv_split_pair[1]])
-    train_master, test_master = torch.utils.data.random_split(master_ds, [ttv_split_master[0], ttv_split_master[1]])
+    train_pair = pair_ds[:ttv_split_pair[0]]
+    test_pair = pair_ds[ttv_split_pair[0]:]
+
+    train_master = master_ds[:ttv_split_master[0]]
+    test_master = master_ds[ttv_split_master[0]:]
+
+    assert len(train_pair['name0']) == ttv_split_pair[0]
+    assert len(test_pair['name0']) == ttv_split_pair[1]
+    assert len(train_master['name']) == ttv_split_master[0]
+    assert len(test_master['name']) == ttv_split_master[1]
 
     pair_loader_train = DataLoader(train_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
     pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
@@ -158,7 +166,7 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
     return total_pair_mse, total_master_mse
 
 if __name__ == '__main__':
-    config_list = ["run02", ]
+    config_list = ["pretrained_encoder_phase2_116", ]
 
     log_file_name = "log.txt"
     debug = False
