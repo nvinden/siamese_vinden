@@ -6,3 +6,5 @@ __pycache__
 .empty
 
 saves/*
+
+log.txt
