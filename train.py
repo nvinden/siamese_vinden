@@ -9,7 +9,7 @@ from datetime import datetime
 
 from dataset import SiamesePairsDataset, SiameseMasterDataset
 from model import Siamese
-from process import save_data, load_data, add_to_log_list, load_json_config
+from process import save_data, load_data, add_to_log_list, load_json_config, emb2str
 
 def train(save_name):
     torch.manual_seed(0)
@@ -61,11 +61,9 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
-    pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
-
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
-        model.requires_grad_()
+        model.requires_grad_()W
         start_time = time.time()
 
         #locking parameters of the encoder for first number of epochs
@@ -87,6 +85,8 @@ def train(save_name):
             pair1 = pair_data['name1']
             pair0.to(device)
             pair1.to(device)
+
+            print(emb2str(pair0[0]), emb2str(pair1[0]))
 
             target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
@@ -112,6 +112,8 @@ def train(save_name):
             loss_master = criterion(target_master, out_master)
             loss_master.backward()
             optim.step()
+
+            print(emb2str(master0[0]), emb2str(master1[0]))
 
             #ADDING TO DIAGNOSTICS
             total_epoch_pair_loss += loss_pair.item()
