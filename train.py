@@ -63,6 +63,8 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    epoch_num = 0
+
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
