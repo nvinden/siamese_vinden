@@ -52,7 +52,7 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
-        if TRAIN_CONFIG['pretrain_reset']:
+        if TRAIN_CONFIG['epoch_reset']:
             start_epoch = 0
 
     criterion = nn.MSELoss()
