@@ -6,16 +6,16 @@
     },
 
     "TRAIN_CONFIG": {
-        "lr": 7e-2,
+        "lr": 0.001,
         "n_epochs": 300,
-        "epoch_reset": true,
+        "epoch_reset": false,
         "batch_size": 32, 
         "A_name": "attention",
         "embedding_type": "one_hot",
         "n_tokens": 30,
         "attention_lock_encoder_epochs": 20,
         "scheduler_step_size": 3,
-        "scheduler_gamma": 0.9
+        "scheduler_gamma": 1
     },
 
     "MODEL_KWARGS": {
