@@ -54,6 +54,7 @@ def train(save_name):
 
         if TRAIN_CONFIG['epoch_reset']:
             start_epoch = 0
+            optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
 
     criterion = nn.MSELoss()
 

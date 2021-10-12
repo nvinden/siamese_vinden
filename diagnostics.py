@@ -47,7 +47,7 @@ def diagnose(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
-    #print_log_list_diagnostics(log_list)
+    print_log_list_diagnostics(log_list)
 
     criterion = nn.MSELoss()
 
