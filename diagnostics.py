@@ -30,16 +30,8 @@ def diagnose(save_name):
     ttv_split_pair = [int(len(pair_ds) * elem) for elem in ttv_split]
     ttv_split_master = [len(master_ds) - ttv_split_pair[1] * 2, ttv_split_pair[1] * 2]
 
-    train_pair = pair_ds[:ttv_split_pair[0]]
-    test_pair = pair_ds[ttv_split_pair[0]:]
-
-    train_master = master_ds[:ttv_split_master[0]]
-    test_master = master_ds[ttv_split_master[0]:]
-
-    assert len(train_pair['name0']) == ttv_split_pair[0]
-    assert len(test_pair['name0']) == ttv_split_pair[1]
-    assert len(train_master['name']) == ttv_split_master[0]
-    assert len(test_master['name']) == ttv_split_master[1]
+    train_pair, test_pair = torch.utils.data.random_split(pair_ds, [ttv_split_pair[0], ttv_split_pair[1]])
+    train_master, test_master = torch.utils.data.random_split(master_ds, [ttv_split_master[0], ttv_split_master[1]])
 
     pair_loader_train = DataLoader(train_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
     pair_loader_test = DataLoader(test_pair, batch_size = TRAIN_CONFIG['batch_size'], shuffle = True, drop_last = True)
@@ -65,12 +57,6 @@ def diagnose(save_name):
 
     model.eval()
     start_time = time.time()
-
-    for test in pair_loader_test:
-        print("TEST 1")
-
-    for test in master_loader_test:
-        print("TEST 2")
 
     for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_test, master_loader_test)):
         #OPTIMIZING ON PAIR
