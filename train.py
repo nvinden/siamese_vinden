@@ -63,7 +63,7 @@ def train(save_name):
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
-        model.requires_grad_()W
+        model.requires_grad_()
         start_time = time.time()
 
         #locking parameters of the encoder for first number of epochs
