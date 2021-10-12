@@ -86,7 +86,7 @@ def train(save_name):
             pair0.to(device)
             pair1.to(device)
 
-            print(emb2str(pair0[0]), emb2str(pair1[0]))
+            #print(emb2str(pair0[0]), emb2str(pair1[0]))
 
             target_pair = torch.zeros([len(pair0)], dtype = torch.float, device = device)
 
@@ -113,7 +113,7 @@ def train(save_name):
             loss_master.backward()
             optim.step()
 
-            print(emb2str(master0[0]), emb2str(master1[0]))
+            #print(emb2str(master0[0]), emb2str(master1[0]))
 
             #ADDING TO DIAGNOSTICS
             total_epoch_pair_loss += loss_pair.item()
