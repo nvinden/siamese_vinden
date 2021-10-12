@@ -8,6 +8,7 @@
     "TRAIN_CONFIG": {
         "lr": 3e-4,
         "n_epochs": 150,
+        "epoch_reset": false,
         "batch_size": 32, 
         "A_name": "lstm",
         "embedding_type": "one_hot",
