@@ -79,7 +79,6 @@ def train(save_name):
 
         for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_train, master_loader_train)):
             #OPTIMIZING ON PAIR
-            '''
             optim.zero_grad()
 
             pair0 = pair_data['name0']
@@ -96,7 +95,6 @@ def train(save_name):
             loss_pair = criterion(target_pair, out_pair)
             loss_pair.backward()
             optim.step()
-            '''
 
             #OPTIMIZING ON MASTER
             optim.zero_grad()
@@ -118,8 +116,7 @@ def train(save_name):
             #print(emb2str(master0[0]), emb2str(master1[0]))
 
             #ADDING TO DIAGNOSTICS
-            total_epoch_pair_loss += 0
-            #total_epoch_pair_loss += loss_pair.item()
+            total_epoch_pair_loss += loss_pair.item()
             total_epoch_master_loss += loss_master.item()
 
         #PRINTING DIAGNOSTICS
