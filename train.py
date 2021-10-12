@@ -163,7 +163,7 @@ if __name__ == '__main__':
     config_list = ["pretrained_encoder_phase2_116", ]
 
     log_file_name = "log.txt"
-    debug = False
+    debug = True
 
     print("GPU Available: " + str(torch.cuda.is_available()))
 
