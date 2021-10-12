@@ -12,7 +12,8 @@
         "batch_size": 32, 
         "A_name": "attention",
         "embedding_type": "one_hot",
-        "n_tokens": 30
+        "n_tokens": 30,
+        "attention_lock_encoder_epochs": 20
     },
 
     "MODEL_KWARGS": {

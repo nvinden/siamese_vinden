@@ -67,6 +67,14 @@ def train(save_name):
         model.requires_grad_()
         start_time = time.time()
 
+        #locking parameters of the encoder for first number of epochs
+        if TRAIN_CONFIG["A_name"] in ["attention", ] and "attention_lock_encoder_epochs" in TRAIN_CONFIG:
+            epoch_lock = TRAIN_CONFIG["attention_lock_encoder_epochs"]
+            if epoch > epoch_lock:
+                model.A_function.training = False
+            else:
+                model.A_function.training = True
+
         total_epoch_pair_loss = 0
         total_epoch_master_loss = 0
 

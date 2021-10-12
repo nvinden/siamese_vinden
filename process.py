@@ -19,7 +19,7 @@ def save_data(path, epoch, model, optimizer, log_list):
 
 def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data = torch.load(path)
+    data = torch.load(path, map_location = torch.device(device))
 
     epoch = data['epoch']
     log_list = data['log_list']
@@ -100,3 +100,22 @@ def create_pretrained_vectors(model, embeddings):
         embeddings_in[i] = curr_name
 
     return embeddings_in, embeddings_truth, replace_list
+
+
+def print_log_list_diagnostics(log_list):
+    print("losses: pair, master, average")
+    for i, (p, m, a) in enumerate(zip(log_list['pair_loss'], log_list['master_loss'], log_list['avg_loss'])):
+        print(i + 1, "{:.5f}".format(p.item()), "{:.5f}".format(m.item()), "{:.5f}".format(a.item()))
+
+    print("accuracy: pair, master, average")
+    for i, (p, m, a) in enumerate(zip(log_list['pair_test'], log_list['master_test'], log_list['avg_test'])):
+        print(i + 1, "{:.5f}".format(p.item()), "{:.5f}".format(m.item()), "{:.5f}".format(a.item()))
+
+def emb2str(emb):
+    word = ""
+    for char in emb:
+        char = char.item()
+        if char >= 30:
+            continue
+        word = word + chr(char + 97)
+    return word
