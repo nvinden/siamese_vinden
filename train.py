@@ -52,17 +52,13 @@ def train(save_name):
     else:
         start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
+        if TRAIN_CONFIG['pretrain_reset']:
+            start_epoch = 0
+
     criterion = nn.MSELoss()
 
     model = model.to(device)
     criterion = criterion.to(device)
-
-    total_epoch_pair_loss = 0
-    total_epoch_master_loss = 0
-    total_epoch_average_loss = 0
-    pair_accuracy = 0 
-    master_accuracy = 0
-    average_accuracy = 0
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()

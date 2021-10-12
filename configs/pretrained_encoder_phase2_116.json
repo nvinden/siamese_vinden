@@ -7,7 +7,8 @@
 
     "TRAIN_CONFIG": {
         "lr": 3e-4,
-        "n_epochs": 100,
+        "n_epochs": 150,
+        "epoch_reset": true,
         "batch_size": 32, 
         "A_name": "attention",
         "embedding_type": "one_hot",
