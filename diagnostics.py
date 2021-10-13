@@ -65,15 +65,19 @@ def diagnose(save_name):
     true_pair_list = pd.DataFrame(columns = column_names)
     true_master_list = pd.DataFrame(columns = column_names)
 
+    total_list = pd.DataFrame(columns = column_names)
+
     false_pair_list.astype({'Distance Score': 'float64'}).dtypes
     false_master_list.astype({'Distance Score': 'float64'}).dtypes
     true_pair_list.astype({'Distance Score': 'float64'}).dtypes
     true_master_list.astype({'Distance Score': 'float64'}).dtypes
+    total_list.astype({'Distance Score': 'float64'}).dtypes
 
     false_pair_list.astype({'JW Distance': 'float64'}).dtypes
     false_master_list.astype({'JW Distance': 'float64'}).dtypes
     true_pair_list.astype({'JW Distance': 'float64'}).dtypes
     true_master_list.astype({'JW Distance': 'float64'}).dtypes
+    total_list.astype({'JW Distance': 'float64'}).dtypes
 
     for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_test, master_loader_test)):
         #OPTIMIZING ON PAIR
@@ -102,6 +106,7 @@ def diagnose(save_name):
                 false_pair_list = false_pair_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
             else:
                 true_pair_list = true_pair_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
+            total_list = total_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
 
         #OPTIMIZING ON MASTER
         master0 = master_data['name'][0:batch_size]
@@ -129,6 +134,7 @@ def diagnose(save_name):
                 false_master_list = false_master_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
             else:
                 true_master_list = true_master_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
+            total_list = total_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
 
     
     false_pair_list = false_pair_list.sort_values(by=['Distance Score'], ascending = False)
@@ -150,7 +156,7 @@ def diagnose(save_name):
     true_master_list.to_csv(true_master_csv)
 
 if __name__ == '__main__':
-    config_list = ["run_with_attention_1", ]
+    config_list = ["run_with_gru_1", ]
 
     log_file_name = "log.txt"
     debug = True

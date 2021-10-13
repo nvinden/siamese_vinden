@@ -64,6 +64,7 @@ def train(save_name):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    '''
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -153,6 +154,7 @@ def train(save_name):
         print(f" TIME: {time.time() - start_time} seconds")
 
     return total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy
+    '''
 
 def test_on_test_set(model, pair_loader_test, master_loader_test):
     jw_k = 0.7
