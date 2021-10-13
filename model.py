@@ -120,8 +120,8 @@ class Siamese(nn.Module):
             h_0 = self.A_function(seq0_embedded)
             h_1 = self.A_function(seq1_embedded)
 
-            h_0 = F.sigmoid(h_0)
-            h_1 = F.sigmoid(h_1)
+            h_0 = torch.sigmoid(h_0)
+            h_1 = torch.sigmoid(h_1)
 
             h_0 = h_0.reshape(self.batch_size, -1)
             h_1 = h_1.reshape(self.batch_size, -1)
@@ -129,8 +129,8 @@ class Siamese(nn.Module):
             h_0_out = self.attention_linear(h_0)
             h_1_out = self.attention_linear(h_1)
 
-            h_0_out = F.sigmoid(h_0_out)
-            h_0_out = F.sigmoid(h_1_out)
+            h_0_out = torch.sigmoid (h_0_out)
+            h_0_out = torch.sigmoid(h_1_out)
 
         distance = self.manhatten_distance(h_0_out, h_1_out)
         
