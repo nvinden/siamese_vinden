@@ -48,11 +48,15 @@ class Siamese(nn.Module):
             TransformerEncoder_KWARGS = model_kwargs['TransformerEncoder']
             layer = nn.TransformerEncoderLayer(**TransformerEncoderLayer_KWARGS)
             self.A_function = nn.TransformerEncoder(layer, TransformerEncoder_KWARGS['num_layers'])
+            self.mask = self.generate_square_subsequent_mask(self.n_tokens)
 
         if self.A_name in ["lstm", "gru"] and self.bidirectional:
             self.bidirectional_linear = nn.Linear(self.n_tokens * 2 * self.hidden_dim, self.hidden_dim)
         elif self.A_name in ["attention", ]:
             self.attention_linear = nn.Linear(self.input_dim * self.n_tokens, self.hidden_dim)
+
+    def generate_square_subsequent_mask(self, sz: int):
+        return torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
 
     def one_hot_encode(self, seq):
         out_vector = torch.zeros([seq.shape[0], self.n_tokens, self.input_dim], dtype = torch.float, device = self.device)
@@ -117,8 +121,8 @@ class Siamese(nn.Module):
             h_1_out = self.bidirectional_linear(h_1)
         #   Attention based encoder
         elif self.A_name == "attention":
-            h_0 = self.A_function(seq0_embedded)
-            h_1 = self.A_function(seq1_embedded)
+            h_0 = self.A_function(seq0_embedded, mask = self.mask)
+            h_1 = self.A_function(seq1_embedded, mask = self.mask)
 
             h_0 = torch.sigmoid(h_0)
             h_1 = torch.sigmoid(h_1)
@@ -129,7 +133,7 @@ class Siamese(nn.Module):
             h_0_out = self.attention_linear(h_0)
             h_1_out = self.attention_linear(h_1)
 
-            h_0_out = torch.sigmoid (h_0_out)
+            h_0_out = torch.sigmoid(h_0_out)
             h_0_out = torch.sigmoid(h_1_out)
 
         distance = self.manhatten_distance(h_0_out, h_1_out)
