@@ -56,7 +56,7 @@ class Siamese(nn.Module):
             self.attention_linear = nn.Linear(self.input_dim * self.n_tokens, self.hidden_dim)
 
     def generate_square_subsequent_mask(self, sz: int):
-        return torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
+        return torch.triu(torch.ones(sz, sz, device = self.device) * float('-inf'), diagonal=1)
 
     def one_hot_encode(self, seq):
         out_vector = torch.zeros([seq.shape[0], self.n_tokens, self.input_dim], dtype = torch.float, device = self.device)
