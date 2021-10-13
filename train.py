@@ -177,7 +177,7 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
     return total_pair_mse, total_master_mse
 
 if __name__ == '__main__':
-    config_list = ["pretrained_encoder_phase2_116", ]
+    config_list = ["pretrained_encoder_phase3_116", ]
 
     log_file_name = "log.txt"
     debug = True

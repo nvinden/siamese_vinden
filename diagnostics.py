@@ -45,7 +45,7 @@ def diagnose(save_name):
         print("NO SAVE FILE FOUND")
         exit()
     else:
-        start_epoch, model, optim, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
+        start_epoch, model, optim, scheduler, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
     print_log_list_diagnostics(log_list)
 
@@ -61,9 +61,13 @@ def diagnose(save_name):
 
     false_pair_list = pd.DataFrame(columns = column_names)
     false_master_list = pd.DataFrame(columns = column_names)
+    true_pair_list = pd.DataFrame(columns = column_names)
+    true_master_list = pd.DataFrame(columns = column_names)
 
     false_pair_list.astype({'Distance Score': 'float64'}).dtypes
     false_master_list.astype({'Distance Score': 'float64'}).dtypes
+    true_pair_list.astype({'Distance Score': 'float64'}).dtypes
+    true_master_list.astype({'Distance Score': 'float64'}).dtypes
 
     for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_test, master_loader_test)):
         #OPTIMIZING ON PAIR
@@ -78,16 +82,17 @@ def diagnose(save_name):
         pair_fails = out_pair >= 0.5
 
         for pair_no, pair_truth in enumerate(pair_fails):
+            dist = out_pair[pair_no].item()
+
+            name0 = pair0[pair_no]
+            name0 = emb2str(name0)
+
+            name1 = pair1[pair_no]
+            name1 = emb2str(name1)
             if pair_truth:
-                dist = out_pair[pair_no].item()
-
-                name0 = pair0[pair_no]
-                name0 = emb2str(name0)
-
-                name1 = pair1[pair_no]
-                name1 = emb2str(name1)
-
                 false_pair_list = false_pair_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+            else:
+                true_pair_list = true_pair_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
 
         #OPTIMIZING ON MASTER
         master0 = master_data['name'][0:batch_size]
@@ -101,26 +106,36 @@ def diagnose(save_name):
         master_fails = out_master <= 0.5
 
         for master_no, master_truth in enumerate(master_fails):
-            #print(emb2str(master0[master_no]), emb2str(master1[master_no]))
+            dist = out_master[master_no].item()
+
+            name0 = master0[master_no]
+            name0 = emb2str(name0)
+
+            name1 = master1[master_no]
+            name1 = emb2str(name1)
             if master_truth:
-                dist = out_master[master_no].item()
-
-                name0 = master0[master_no]
-                name0 = emb2str(name0)
-
-                name1 = master1[master_no]
-                name1 = emb2str(name1)
-
                 false_master_list = false_master_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+            else:
+                true_master_list = true_master_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+
     
     false_pair_list = false_pair_list.sort_values(by=['Distance Score'], ascending = False)
     false_master_list = false_master_list.sort_values(by=['Distance Score'])
+    true_pair_list = true_pair_list.sort_values(by=['Distance Score'])
+    true_master_list = true_master_list.sort_values(by=['Distance Score'], ascending = False)
 
-    false_pair_csv = "data/false_pair.csv"
-    false_master_csv = "data/false_master.csv"
+    false_pair_csv = os.path.join("data", save_name, "false_pair.csv")
+    false_master_csv = os.path.join("data", save_name, "false_master.csv")
+    true_pair_csv = os.path.join("data", save_name, "true_pair.csv")
+    true_master_csv = os.path.join("data", save_name, "true_master.csv")
+
+    if not os.path.isdir(os.path.join("data", save_name)):
+        os.mkdir(os.path.join("data", save_name))
 
     false_pair_list.to_csv(false_pair_csv)
     false_master_list.to_csv(false_master_csv)
+    true_pair_list.to_csv(true_pair_csv)
+    true_master_list.to_csv(true_master_csv)
 
 if __name__ == '__main__':
     config_list = ["run_with_attention_1", ]
