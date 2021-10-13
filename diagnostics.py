@@ -7,6 +7,7 @@ import pandas as pd
 import time
 import os
 from datetime import datetime
+from pyjarowinkler import distance as jw
 
 from dataset import SiamesePairsDataset, SiameseMasterDataset
 from model import Siamese
@@ -57,7 +58,7 @@ def diagnose(save_name):
     model.eval()
     start_time = time.time()
 
-    column_names = ["Distance Score", "Name0", "Name1"]
+    column_names = ["Distance Score", "JW Distance", "Name0", "Name1"]
 
     false_pair_list = pd.DataFrame(columns = column_names)
     false_master_list = pd.DataFrame(columns = column_names)
@@ -68,6 +69,11 @@ def diagnose(save_name):
     false_master_list.astype({'Distance Score': 'float64'}).dtypes
     true_pair_list.astype({'Distance Score': 'float64'}).dtypes
     true_master_list.astype({'Distance Score': 'float64'}).dtypes
+
+    false_pair_list.astype({'JW Distance': 'float64'}).dtypes
+    false_master_list.astype({'JW Distance': 'float64'}).dtypes
+    true_pair_list.astype({'JW Distance': 'float64'}).dtypes
+    true_master_list.astype({'JW Distance': 'float64'}).dtypes
 
     for batch_no, (pair_data, master_data) in enumerate(zip(pair_loader_test, master_loader_test)):
         #OPTIMIZING ON PAIR
@@ -89,10 +95,13 @@ def diagnose(save_name):
 
             name1 = pair1[pair_no]
             name1 = emb2str(name1)
+
+            jw_distance = jw.get_jaro_distance(name0, name1, winkler=True, scaling=0.1)
+
             if pair_truth:
-                false_pair_list = false_pair_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+                false_pair_list = false_pair_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
             else:
-                true_pair_list = true_pair_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+                true_pair_list = true_pair_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
 
         #OPTIMIZING ON MASTER
         master0 = master_data['name'][0:batch_size]
@@ -113,10 +122,13 @@ def diagnose(save_name):
 
             name1 = master1[master_no]
             name1 = emb2str(name1)
+
+            jw_distance = jw.get_jaro_distance(name0, name1, winkler=True, scaling=0.1)
+
             if master_truth:
-                false_master_list = false_master_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+                false_master_list = false_master_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
             else:
-                true_master_list = true_master_list.append({"Distance Score": dist, "Name0": name0, "Name1": name1}, ignore_index = True)
+                true_master_list = true_master_list.append({"Distance Score": dist, "JW Distance": jw_distance, "Name0": name0, "Name1": name1}, ignore_index = True)
 
     
     false_pair_list = false_pair_list.sort_values(by=['Distance Score'], ascending = False)

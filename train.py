@@ -204,7 +204,7 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
     total_master_mse_jw /= (batch_no + 1)
     total_master_mse_jw /= (batch_no + 1)
 
-    return total_pair_mse, total_master_mse
+    return total_pair_mse, total_master_mse, total_pair_mse_jw, total_master_mse_jw
 
 if __name__ == '__main__':
     config_list = ["pretrained_encoder_phase3_116", ]
