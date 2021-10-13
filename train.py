@@ -155,6 +155,7 @@ def train(save_name):
     return total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy
 
 def test_on_test_set(model, pair_loader_test, master_loader_test):
+    jw_k = 0.7
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
     total_pair_mse = 0
@@ -176,32 +177,34 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
         pair_sum = torch.sum(man_pair <= 0.5)
         master_sum = torch.sum(man_master >= 0.5)
 
+        pair_mse_jw = 0
         for curr_pair0, curr_pair1 in zip(pair0, pair1):
             curr_pair0 = emb2str(curr_pair0)
             curr_pair1 = emb2str(curr_pair1)
 
             dist = jw.get_jaro_distance(curr_pair0, curr_pair1, winkler=True, scaling=0.1)
 
-            if dist <= 0.5:
-                total_pair_mse_jw += 1
+            if dist >= jw_k:
+                pair_mse_jw += 1
 
+        master_mse_jw = 0
         for curr_master0, curr_master1 in zip(master0, master1):
             curr_master0 = emb2str(curr_master0)
             curr_master1 = emb2str(curr_master1)
 
             dist = jw.get_jaro_distance(curr_master0, curr_master1, winkler=True, scaling=0.1)
 
-            if dist >= 0.5:
-                total_master_mse_jw += 1
+            if dist <= jw_k:
+                master_mse_jw += 1
 
-        total_pair_mse += pair_sum.item() / pair0.shape[0]
-        total_master_mse += master_sum.item() / pair0.shape[0]
-        total_pair_mse_jw += master_sum.item() / pair0.shape[0]
-        total_master_mse_jw += master_sum.item() / pair0.shape[0]
+        total_pair_mse += (pair_sum.item() / pair0.shape[0])
+        total_master_mse += (master_sum.item() / pair0.shape[0])
+        total_pair_mse_jw += (pair_mse_jw / pair0.shape[0])
+        total_master_mse_jw += (master_mse_jw / pair0.shape[0])
 
     total_pair_mse /= (batch_no + 1)
     total_master_mse /= (batch_no + 1)
-    total_master_mse_jw /= (batch_no + 1)
+    total_pair_mse_jw /= (batch_no + 1)
     total_master_mse_jw /= (batch_no + 1)
 
     return total_pair_mse, total_master_mse, total_pair_mse_jw, total_master_mse_jw
