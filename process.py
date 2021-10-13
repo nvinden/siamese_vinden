@@ -65,18 +65,18 @@ def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None
     log_list["master_loss"].append(master_loss)
     log_list["avg_loss"].append(avg_loss)
 
-    if pair_loss is not None:
-        log_list["pair_test"].append(pair_loss)
-    if master_loss is not None:
-        log_list["master_test"].append(master_loss)
-    if avg_loss is not None:
-        log_list["avg_test"].append(avg_loss)
-    if pair_loss_jw is not None:
-        log_list["pair_test_jw"].append(pair_loss_jw)
-    if master_loss_jw is not None:
-        log_list["master_test_jw"].append(master_loss_jw)
-    if avg_loss_jw is not None:
-        log_list["avg_test"].append(avg_loss_jw)
+    if pair_test is not None:
+        log_list["pair_test"].append(pair_test)
+    if master_test is not None:
+        log_list["master_test"].append(master_test)
+    if avg_test is not None:
+        log_list["avg_test"].append(avg_test)
+    if pair_test_jw is not None:
+        log_list["pair_test_jw"].append(pair_test_jw)
+    if master_test_jw is not None:
+        log_list["master_test_jw"].append(master_test_jw)
+    if avg_test_jw is not None:
+        log_list["avg_test_jw"].append(avg_test_jw)
 
 def load_json_config(path):
     with open(path) as f:
@@ -119,7 +119,6 @@ def create_pretrained_vectors(model, embeddings):
         embeddings_in[i] = curr_name
 
     return embeddings_in, embeddings_truth, replace_list
-
 
 def print_log_list_diagnostics(log_list):
     print("losses: pair, master, average")
