@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import time
 import os
 from datetime import datetime
+from pyjarowinkler import distance as jw
 
 from dataset import SiamesePairsDataset, SiameseMasterDataset
 from model import Siamese
@@ -129,17 +130,21 @@ def train(save_name):
         total_epoch_average_loss = (total_epoch_pair_loss + total_epoch_master_loss) / 2
 
         print(f"\nEpoch {epoch + 1}:")
-        print(f"    Pair Loss: {total_epoch_pair_loss}")
-        print(f"  Master Loss: {total_epoch_master_loss}")
-        print(f"     Avg Loss: {total_epoch_average_loss}")
+        print(f"     Pair Loss: {total_epoch_pair_loss}")
+        print(f"   Master Loss: {total_epoch_master_loss}")
+        print(f"      Avg Loss: {total_epoch_average_loss}")
 
         if (epoch + 1) % 10 == 0:
-            pair_accuracy, master_accuracy = test_on_test_set(model, pair_loader_test, master_loader_test)
+            pair_accuracy, master_accuracy, pair_accuracy_jw, master_accuracy_jw = test_on_test_set(model, pair_loader_test, master_loader_test)
             average_accuracy = (pair_accuracy + master_accuracy) / 2
-            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy)
-            print(f"    Pair Test: {pair_accuracy}")
-            print(f"  Master Test: {master_accuracy}")
-            print(f"     Avg Test: {average_accuracy}")
+            average_accuracy_jw = (pair_accuracy_jw + master_accuracy_jw) / 2
+            add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy, pair_accuracy_jw, master_accuracy_jw, average_accuracy_jw)
+            print(f"     Pair Test: {pair_accuracy}")
+            print(f"   Master Test: {master_accuracy}")
+            print(f"      Avg Test: {average_accuracy}")
+            print(f"  JW Pair Test: {pair_accuracy_jw}")
+            print(f"JW Master Test: {master_accuracy_jw}")
+            print(f"   JW Avg Test: {average_accuracy}")
 
             save_data(save_file, epoch, model, optim, scheduler, log_list)
         else:
@@ -154,6 +159,8 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
     model.eval()
     total_pair_mse = 0
     total_master_mse = 0
+    total_pair_mse_jw = 0
+    total_master_mse_jw = 0
     for batch_no, (pair, master) in enumerate(zip(pair_loader_test, master_loader_test)):
         pair0 = pair['name0']
         pair1 = pair['name1']
@@ -169,10 +176,33 @@ def test_on_test_set(model, pair_loader_test, master_loader_test):
         pair_sum = torch.sum(man_pair <= 0.5)
         master_sum = torch.sum(man_master >= 0.5)
 
+        for curr_pair0, curr_pair1 in zip(pair0, pair1):
+            curr_pair0 = emb2str(curr_pair0)
+            curr_pair1 = emb2str(curr_pair1)
+
+            dist = jw.get_jaro_distance(curr_pair0, curr_pair1, winkler=True, scaling=0.1)
+
+            if dist <= 0.5:
+                total_pair_mse_jw += 1
+
+        for curr_master0, curr_master1 in zip(master0, master1):
+            curr_master0 = emb2str(curr_master0)
+            curr_master1 = emb2str(curr_master1)
+
+            dist = jw.get_jaro_distance(curr_master0, curr_master1, winkler=True, scaling=0.1)
+
+            if dist >= 0.5:
+                total_master_mse_jw += 1
+
         total_pair_mse += pair_sum.item() / pair0.shape[0]
         total_master_mse += master_sum.item() / pair0.shape[0]
+        total_pair_mse_jw += master_sum.item() / pair0.shape[0]
+        total_master_mse_jw += master_sum.item() / pair0.shape[0]
+
     total_pair_mse /= (batch_no + 1)
     total_master_mse /= (batch_no + 1)
+    total_master_mse_jw /= (batch_no + 1)
+    total_master_mse_jw /= (batch_no + 1)
 
     return total_pair_mse, total_master_mse
 

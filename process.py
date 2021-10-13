@@ -41,7 +41,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     return epoch, model, optim, scheduler, log_list
 
-def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None, master_test = None, avg_test = None):
+def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None, master_test = None, avg_test = None, pair_test_jw = None, master_test_jw = None, avg_test_jw = None):
     if not "pair_loss" in log_list:
         log_list["pair_loss"] = list()
     if not "master_loss" in log_list:
@@ -54,6 +54,12 @@ def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None
         log_list["master_test"] = list()
     if not "avg_test" in log_list:
         log_list["avg_test"] = list()
+    if not "pair_test_jw" in log_list:
+        log_list["pair_test_jw"] = list()
+    if not "master_test_jw" in log_list:
+        log_list["master_test_jw"] = list()
+    if not "avg_test_jw" in log_list:
+        log_list["avg_test_jw"] = list()
         
     log_list["pair_loss"].append(pair_loss)
     log_list["master_loss"].append(master_loss)
@@ -65,6 +71,12 @@ def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None
         log_list["master_test"].append(master_loss)
     if avg_loss is not None:
         log_list["avg_test"].append(avg_loss)
+    if pair_loss_jw is not None:
+        log_list["pair_test_jw"].append(pair_loss_jw)
+    if master_loss_jw is not None:
+        log_list["master_test_jw"].append(master_loss_jw)
+    if avg_loss_jw is not None:
+        log_list["avg_test"].append(avg_loss_jw)
 
 def load_json_config(path):
     with open(path) as f:
