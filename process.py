@@ -7,13 +7,15 @@ from model import Siamese
 import json
 from random import randrange
 
-def save_data(path, epoch, model, optimizer, scheduler, log_list):
+def save_data(path, epoch, model, optimizer, scheduler, log_list, dataset):
     torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
-            'log_list': log_list
+            'log_list': log_list,
+            'dataset': dataset
+            
     }, path)
 
     print(f"Saved run successfully at {path}")

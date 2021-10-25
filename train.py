@@ -26,9 +26,6 @@ def train(save_name):
 
     ttv_splits = DATASET_CONFIG['ttv_split']
 
-    ds = RDataset(DATASET_CONFIG)
-
-    ds.train_ds = ds.train_ds[0:640]
 
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
@@ -38,9 +35,11 @@ def train(save_name):
         scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
         log_list = {}
 
+        ds = RDataset(DATASET_CONFIG)
+
         start_epoch = 0
     else:
-        start_epoch, model, optim, scheduler, log_list = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
+        start_epoch, model, optim, scheduler, log_list, ds = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
 
         if 'epoch_reset' in TRAIN_CONFIG and TRAIN_CONFIG['epoch_reset']:
             start_epoch = 0
@@ -50,6 +49,8 @@ def train(save_name):
     criterion = contrastive_loss
 
     model = model.to(device)
+
+    save_data(save_file, 0, model, optim, scheduler, log_list, ds)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -95,8 +96,13 @@ def train(save_name):
         scheduler.step()
 
         if epoch >= 20:
+            print("Embedding...")
             ds.embeddings.embed_all(model)
+            print("Embedding done...")
+
+            print("Adding to dataset...")
             ds.add_to_dataset()
+            print("Adding to dataset done...")
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
@@ -104,7 +110,7 @@ def train(save_name):
         print(f"\nEpoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
         if (epoch + 1) % 10 == 0:
-            save_data(save_file, epoch, model, optim, scheduler, log_list)
+            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
             #accuracy = test_on_test_set(model, test_dl)
             #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy, pair_accuracy_jw, master_accuracy_jw, average_accuracy_jw)
             #print(f"          Test: {accuracy}")
