@@ -174,6 +174,8 @@ class RDataset(Dataset):
 
         assert sum(self.splits) == 1.0
 
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         data_root = config["data_root"]
         self.data_root = data_root
 
@@ -495,7 +497,7 @@ class RDataset(Dataset):
             for row in entries:
                 for key in row.keys():
                     if not torch.is_tensor(row[key]):
-                        row[key] = torch.tensor(row[key])
+                        row[key] = torch.tensor(row[key], device = self.device)
 
                     if key not in entries_concat:
                         entries_concat[key] = row[key].unsqueeze(0)

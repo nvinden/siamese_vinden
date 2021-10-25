@@ -49,6 +49,8 @@ def train(save_name):
 
     model = model.to(device)
 
+    accuracy = test_on_test_set(model, ds)
+
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -113,7 +115,7 @@ def train(save_name):
         print(f"          Loss: {total_epoch_loss}")
         if (epoch + 1) % 10 == 0:
             save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
-            #accuracy = test_on_test_set(model, test_dl)
+            accuracy = test_on_test_set(model, ds)
             #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy, pair_accuracy_jw, master_accuracy_jw, average_accuracy_jw)
             #print(f"          Test: {accuracy}")
             #save_data(save_file, epoch, model, optim, scheduler, log_list)
@@ -126,7 +128,7 @@ def train(save_name):
 
     return total_epoch_loss, accuracy
 
-def test_on_test_set(model, test_dl):
+def test_on_test_set(model, ds):
     jw_k = 0.7
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
@@ -134,10 +136,14 @@ def test_on_test_set(model, test_dl):
     total_accuracy_jw = 0
     criterion = contrastive_loss
     with torch.no_grad():
-        for batch_no, data in enumerate(test_dl):
-            n0 = data['n0']
-            n1 = data['n1']
+        ds.mode = "test"
+        for batch_no, data in enumerate(ds):
+            n0 = data['emb0']
+            n1 = data['emb1']
             label = data['label']
+
+            print(emb2str(n0[0]))
+            print(emb2str(n1[0]))
 
             n0.requires_grad = False
             n1.requires_grad = False
