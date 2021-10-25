@@ -115,6 +115,10 @@ def train(save_name):
             accuracy = test_on_test_set(model, ds)
             add_to_log_list(log_list, total_epoch_loss, accuracy)
             print(f"          Test: {accuracy}")
+
+            ds.mode = "train"
+
+            ds.shuffle_ds()
         else:
             add_to_log_list(log_list, total_epoch_loss, accuracy)
 
