@@ -505,6 +505,8 @@ class RDataset(Dataset):
                     else:
                         print(entries_concat[key].shape)
                         print(val.shape)
+                        print(entries_concat[key])
+                        print(val)
                         entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
         else:
