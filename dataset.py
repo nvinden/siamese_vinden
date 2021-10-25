@@ -373,8 +373,6 @@ class RDataset(Dataset):
             
             self.mode = "test"
             for idx in range(len(self.test_table['pairs'])):
-                if idx in self.pair_test_used:
-                    continue
                 entry = self.get_entry(idx, True, unique = True)
                 self.test_ds.append(entry)
                 name0 = emb2str(entry['emb0'])
@@ -392,8 +390,6 @@ class RDataset(Dataset):
 
             self.mode = "val"
             for idx in range(len(self.val_table['pairs'])):
-                if idx in self.pair_val_used:
-                    continue
                 entry = self.get_entry(idx, True, unique = True)
                 self.test_ds.append(entry)
                 name0 = emb2str(entry['emb0'])
