@@ -63,6 +63,7 @@ def train(save_name):
                 model.A_function.training = True
 
         total_epoch_loss = 0
+        total_pairs = len(ds)
 
         ds.mode = "train"
         for batch_no, data in enumerate(ds):
@@ -120,6 +121,7 @@ def train(save_name):
             pass
             #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
 
+        print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
 
     return total_epoch_loss, accuracy
