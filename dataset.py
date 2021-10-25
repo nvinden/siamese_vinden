@@ -227,17 +227,13 @@ class RDataset(Dataset):
         self.master_cart_product_length_test = len(self.test_table['master']) ** 2
         self.master_cart_product_length_val = len(self.val_table['master']) ** 2
 
-        self.master_train_used = dict()
-        self.master_test_used = dict()
-        self.master_val_used = dict()
-
-        self.pair_train_used = dict()
-        self.pair_test_used = dict()
-        self.pair_val_used = dict()
-
         self.train_ds = list()
         self.test_ds = list()
         self.val_ds = list()
+
+        self.train_used = dict()
+        self.test_used = dict()
+        self.val_used = dict()
 
         self.initialize(reprocess)
 
@@ -262,15 +258,15 @@ class RDataset(Dataset):
         if self.mode == "train":
             ds = self.train_table['master']
             cart_length = self.master_cart_product_length_train
-            used_list = self.master_train_used
+            used_dict = self.train_used
         elif self.mode == "test":
             ds = self.test_table['master']
             cart_length = self.master_cart_product_length_test
-            used_list = self.master_test_used
+            used_dict = self.test_used
         elif self.mode == "val":
             ds = self.val_table['master']
             cart_length = self.master_cart_product_length_val
-            used_list = self.master_val_used
+            used_dict = self.val_used
         else:
             return -1
 
@@ -290,7 +286,7 @@ class RDataset(Dataset):
                 name1 = emb2str(ds[index1])
                 name2 = emb2str(ds[index2])
 
-                if (index in used_list and unique) or index1 == index2:
+                if index in used_dict and used_dict[name1] == name2 and unique:
                     continue
                 elif name1 in self.pair_dict and name2 in self.pair_dict and self.pair_dict[name1] == name2:
                     continue
@@ -303,15 +299,15 @@ class RDataset(Dataset):
         if self.mode == "train":
             ds = self.train_table['pairs']
             length = ds.shape[0]
-            used_list = self.pair_train_used
+            used_dict = self.train_used
         elif self.mode == "test":
             ds = self.test_table['pairs']
             length = ds.shape[0]
-            used_list = self.pair_test_used
+            used_dict = self.test_used
         elif self.mode == "val":
             ds = self.val_table['pairs']
             length = ds.shape[0]
-            used_list = self.pair_val_used
+            used_dict = self.val_used
         else:
             return -1
         
@@ -321,7 +317,10 @@ class RDataset(Dataset):
             while True:
                 index = random.randint(0, length)
 
-                if index in used_list and unique:
+                name0 = emb2str(ds[idx, 0])
+                name1 = emb2str(ds[idx, 1])
+
+                if index in used_dict and used_dict[name0] == name1 and unique:
                     continue
                 else:
                     break
@@ -357,15 +356,19 @@ class RDataset(Dataset):
         if not os.path.isfile(save_file) or reprocess:
             self.mode = "train"
             for idx in range(len(self.train_table['pairs'])):
-                if idx in self.pair_train_used:
-                    continue
                 entry = self.get_entry(idx, True, unique = True)
                 self.train_ds.append(entry)
-                self.pair_train_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.train_used[name0] = name1
+                self.train_used[name1] = name0
             for idx in range(self.initial_set_negatives):
                 entry = self.get_entry(None, False, unique = True)
                 self.train_ds.append(entry)
-                self.master_train_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.train_used[name0] = name1
+                self.train_used[name1] = name0
             self.shuffle_ds()
             
             self.mode = "test"
@@ -374,11 +377,17 @@ class RDataset(Dataset):
                     continue
                 entry = self.get_entry(idx, True, unique = True)
                 self.test_ds.append(entry)
-                self.pair_test_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.test_used[name0] = name1
+                self.test_used[name1] = name0
             for idx in range(len(self.test_table['pairs'])):
                 entry = self.get_entry(None, False, unique = True)
                 self.test_ds.append(entry)
-                self.master_test_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.test_used[name0] = name1
+                self.test_used[name1] = name0
             self.shuffle_ds()
 
             self.mode = "val"
@@ -387,11 +396,17 @@ class RDataset(Dataset):
                     continue
                 entry = self.get_entry(idx, True, unique = True)
                 self.test_ds.append(entry)
-                self.pair_val_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.val_used[name0] = name1
+                self.val_used[name1] = name0
             for idx in range(len(self.val_table['pairs'])):
                 entry = self.get_entry(None, False, unique = True)
                 self.val_ds.append(entry)
-                self.master_val_used[idx] = -1
+                name0 = emb2str(entry['emb0'])
+                name1 = emb2str(entry['emb1'])
+                self.val_used[name0] = name1
+                self.val_used[name1] = name0
             self.shuffle_ds()
 
             self.mode = orignal_mode
@@ -404,9 +419,7 @@ class RDataset(Dataset):
         save_file = os.path.join(self.data_root, "initialized.json")
         with open(save_file, 'w') as fout:
             json.dump({"train": self.train_ds, "test": self.test_ds, "val": self.val_ds, \
-                "pair_train_used": self.pair_train_used, "pair_test_used": self.pair_test_used, \
-                "pair_val_used": self.pair_val_used, "master_train_used": self.master_train_used, \
-                "master_test_used": self.master_test_used, "master_val_used": self.master_val_used}, \
+                "train_used": self.train_used, "test_used": self.test_used, "val_used": self.val_used}, \
                 fout, cls = TorchArrayEncoder)
 
     def load_ds(self):
@@ -418,12 +431,9 @@ class RDataset(Dataset):
             self.test_ds = decoded['test']
             self.val_ds = decoded['val']
 
-            self.pair_train_used = decoded["pair_train_used"]
-            self.pair_test_used = decoded["pair_test_used"]
-            self.pair_val_used = decoded["pair_val_used"]
-            self.master_train_used = decoded["master_train_used"]
-            self.master_test_used = decoded["master_test_used"]
-            self.master_val_used = decoded["master_val_used"]
+            self.train_used = decoded["train_used"]
+            self.test_used = decoded["test_used"]
+            self.val_used = decoded["val_used"]
 
             self.train_ds = [{"emb0": torch.tensor(entry["emb0"]), "emb1": torch.tensor(entry["emb1"]), "label": entry["label"]} for entry in self.train_ds]
             self.test_ds = [{"emb0": torch.tensor(entry["emb0"]), "emb1": torch.tensor(entry["emb1"]), "label": entry["label"]} for entry in self.test_ds]
@@ -501,11 +511,14 @@ class RDataset(Dataset):
 
     def add_to_dataset(self):
         if self.mode == "train":
-            table = self.train_table["pairs"]
+            ds = self.train_ds
+            used = self.train_used
         elif self.mode == "test":
-            table = self.test_table["pairs"]
+            ds = self.test_ds
+            used = self.test_used
         elif self.mode == "val":
-            table = self.val_table["pairs"]
+            ds = self.val_ds
+            used = self.val_used
         else:
             return -1
 
@@ -524,7 +537,11 @@ class RDataset(Dataset):
             nn_name = index2name[nn_idx]
 
             if name in pair_dict and not nn_name == pair_dict[name]:
-                print(f"Hard Negatives {name} {nn_name}")
+                if not(name in used and used[name] == nn_name):
+                    ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
+                    used[name] = nn_name
+                    used[nn_name] = name
+                    n_added += 1
             elif name in pair_dict:
                 print(f"Pair Retrieved {name} {nn_name}")
 
@@ -554,7 +571,7 @@ class EmbeddingsMasterList():
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
 
-            if i % 5000:
+            if i % 5000 == 0:
                 print(f"Embedded {i} names")
 
         self.embeddings.build(self.trees)

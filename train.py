@@ -26,7 +26,6 @@ def train(save_name):
 
     ttv_splits = DATASET_CONFIG['ttv_split']
 
-
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
         model = Siamese(TRAIN_CONFIG, MODEL_KWARGS)
@@ -48,9 +47,9 @@ def train(save_name):
 
     criterion = contrastive_loss
 
-    model = model.to(device)
+    ds = RDataset(DATASET_CONFIG)
 
-    save_data(save_file, 0, model, optim, scheduler, log_list, ds)
+    model = model.to(device)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -95,14 +94,14 @@ def train(save_name):
 
         scheduler.step()
 
-        if epoch >= 20:
+        if epoch >= 10:
             print("Embedding...")
             ds.embeddings.embed_all(model)
             print("Embedding done...")
 
             print("Adding to dataset...")
-            ds.add_to_dataset()
-            print("Adding to dataset done...")
+            n_added = ds.add_to_dataset()
+            print(f"{n_added} entries added")
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
