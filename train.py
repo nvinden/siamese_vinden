@@ -134,9 +134,9 @@ def test_on_test_set(model, test_dl):
             n1.requires_grad = False
             label.requires_grad = False
 
-            n0.to(device)
-            n1.to(device)
-            label.to(device)
+            n0 = n0.to(device)
+            n1 = n1.to(device)
+            label = label.to(device)
 
             name_similarity, (v_i, v_j) = model(n0, n1)
             loss = criterion(v_i, v_j, label)
