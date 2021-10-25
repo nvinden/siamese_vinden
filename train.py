@@ -47,8 +47,6 @@ def train(save_name):
 
     criterion = contrastive_loss
 
-    ds = RDataset(DATASET_CONFIG)
-
     model = model.to(device)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
@@ -100,8 +98,12 @@ def train(save_name):
             print("Embedding done...")
 
             print("Adding to dataset...")
-            n_added = ds.add_to_dataset()
-            print(f"{n_added} entries added")
+            n_added, pairs_found = ds.add_to_dataset()
+            ds.embeddings.embeddings = None
+            print(f"{n_added} entries added, {pairs_found} pairs found...")
+            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
+
+
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)

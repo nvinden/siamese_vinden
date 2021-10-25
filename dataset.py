@@ -519,6 +519,7 @@ class RDataset(Dataset):
             return -1
 
         n_added = 0
+        n_pairs_found = 0
 
         index2name = self.embeddings.index2name
         name2index = self.embeddings.name2index
@@ -539,9 +540,9 @@ class RDataset(Dataset):
                     used[nn_name] = name
                     n_added += 1
             elif name in pair_dict:
-                print(f"Pair Retrieved {name} {nn_name}")
+                n_pairs_found += 1
 
-        return n_added
+        return n_added, n_pairs_found
 
 class EmbeddingsMasterList():
     def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50):
