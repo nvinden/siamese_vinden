@@ -45,43 +45,17 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     return epoch, model, optim, scheduler, log_list, ds
 
-def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None, master_test = None, avg_test = None, pair_test_jw = None, master_test_jw = None, avg_test_jw = None):
-    if not "pair_loss" in log_list:
-        log_list["pair_loss"] = list()
-    if not "master_loss" in log_list:
-        log_list["master_loss"] = list()
-    if not "avg_loss" in log_list:
-        log_list["avg_loss"] = list()
-    if not "pair_test" in log_list:
-        log_list["pair_test"] = list()
-    if not "master_test" in log_list:
-        log_list["master_test"] = list()
-    if not "avg_test" in log_list:
-        log_list["avg_test"] = list()
-    if not "pair_test_jw" in log_list:
-        log_list["pair_test_jw"] = list()
-    if not "master_test_jw" in log_list:
-        log_list["master_test_jw"] = list()
-    if not "avg_test_jw" in log_list:
-        log_list["avg_test_jw"] = list()
+def add_to_log_list(log_list, loss, accuracy = None):
+    if not "loss" in log_list:
+        log_list["loss"] = list()
+    if not "accuracy" in log_list:
+        log_list["accuracy"] = list()
         
-    log_list["pair_loss"].append(pair_loss)
-    log_list["master_loss"].append(master_loss)
-    log_list["avg_loss"].append(avg_loss)
+    log_list["loss"].append(loss)
 
-    if pair_test is not None:
-        log_list["pair_test"].append(pair_test)
-    if master_test is not None:
-        log_list["master_test"].append(master_test)
-    if avg_test is not None:
-        log_list["avg_test"].append(avg_test)
-    if pair_test_jw is not None:
-        log_list["pair_test_jw"].append(pair_test_jw)
-    if master_test_jw is not None:
-        log_list["master_test_jw"].append(master_test_jw)
-    if avg_test_jw is not None:
-        log_list["avg_test_jw"].append(avg_test_jw)
-
+    if accuracy is not None:
+        log_list["accuracy"].append(accuracy)
+        
 def load_json_config(path):
     with open(path) as f:
         data = json.load(f)

@@ -49,8 +49,6 @@ def train(save_name):
 
     model = model.to(device)
 
-    accuracy = test_on_test_set(model, ds)
-
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -95,7 +93,15 @@ def train(save_name):
 
         scheduler.step()
 
-        if epoch >= 10:
+        if epoch >= 20:
+            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
+
+        #PRINTING DIAGNOSTICS
+        total_epoch_loss /= (batch_no + 1)
+
+        print(f"\nEpoch {epoch + 1}:")
+        print(f"          Loss: {total_epoch_loss}")
+        if (epoch + 1) % 10 == 0:
             print("Embedding...")
             ds.embeddings.embed_all(model)
             print("Embedding done...")
@@ -104,24 +110,13 @@ def train(save_name):
             n_added, pairs_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found...")
-            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
 
-
-
-        #PRINTING DIAGNOSTICS
-        total_epoch_loss /= (batch_no + 1)
-
-        print(f"\nEpoch {epoch + 1}:")
-        print(f"          Loss: {total_epoch_loss}")
-        if (epoch + 1) % 10 == 0:
             save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
             accuracy = test_on_test_set(model, ds)
-            #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss, pair_accuracy, master_accuracy, average_accuracy, pair_accuracy_jw, master_accuracy_jw, average_accuracy_jw)
-            #print(f"          Test: {accuracy}")
-            #save_data(save_file, epoch, model, optim, scheduler, log_list)
+            add_to_log_list(log_list, total_epoch_loss, accuracy)
+            print(f"          Test: {accuracy}")
         else:
-            pass
-            #add_to_log_list(log_list, total_epoch_pair_loss, total_epoch_master_loss, total_epoch_average_loss)
+            add_to_log_list(log_list, total_epoch_loss, accuracy)
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
@@ -129,6 +124,7 @@ def train(save_name):
     return total_epoch_loss, accuracy
 
 def test_on_test_set(model, ds):
+    original_mode = ds.mode
     jw_k = 0.7
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
@@ -142,9 +138,6 @@ def test_on_test_set(model, ds):
             n1 = data['emb1']
             label = data['label']
 
-            print(emb2str(n0[0]))
-            print(emb2str(n1[0]))
-
             n0.requires_grad = False
             n1.requires_grad = False
             label.requires_grad = False
@@ -157,6 +150,8 @@ def test_on_test_set(model, ds):
             loss = criterion(v_i, v_j, label)
 
             total_accuracy += loss.item()
+        
+    ds.mode = original_mode
 
     total_accuracy /= (batch_no + 1)
 

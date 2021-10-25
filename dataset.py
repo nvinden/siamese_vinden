@@ -242,7 +242,7 @@ class RDataset(Dataset):
         self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset)
 
     def set_mode(self, mode : str):
-        self.mode = "train"
+        self.mode = mode
 
     def _build_pair_dict(self):
         pair_dict = dict()
@@ -499,10 +499,11 @@ class RDataset(Dataset):
                     if not torch.is_tensor(row[key]):
                         row[key] = torch.tensor(row[key], device = self.device)
 
+                    val = row[key].unsqueeze(0).to(self.device)
                     if key not in entries_concat:
-                        entries_concat[key] = row[key].unsqueeze(0)
+                        entries_concat[key] = val
                     else:
-                        entries_concat[key] = torch.cat([entries_concat[key], row[key].unsqueeze(0)], dim = 0)
+                        entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
         else:
             raise StopIteration
