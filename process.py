@@ -33,6 +33,8 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
     optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
     optim.load_state_dict(data['optimizer_state_dict'])
 
+    ds = data['dataset']
+
     if 'scheduler_state_dict' in data:
         scheduler = torch.optim.lr_scheduler.StepLR(optim, TRAIN_CONFIG['scheduler_step_size'], gamma=TRAIN_CONFIG['scheduler_gamma'])
         scheduler.load_state_dict(data['scheduler_state_dict'])
@@ -41,7 +43,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     print(f"Loaded run successfully from {path}")
 
-    return epoch, model, optim, scheduler, log_list
+    return epoch, model, optim, scheduler, log_list, ds
 
 def add_to_log_list(log_list, pair_loss, master_loss, avg_loss, pair_test = None, master_test = None, avg_test = None, pair_test_jw = None, master_test_jw = None, avg_test_jw = None):
     if not "pair_loss" in log_list:
