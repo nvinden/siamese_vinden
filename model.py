@@ -84,59 +84,68 @@ class Siamese(nn.Module):
 
         return out
 
-    def forward(self, seq0, seq1):
+    def forward(self, seq0, *argv):
         self.batch_size = len(seq0)
 
-        assert len(seq0) == len(seq1)
+        two_vars = False
+
+        for arg in argv:
+            if torch.is_tensor(arg):
+                seq1 = arg
+                two_vars = True
 
         seq0_embedded = self.embedding_function(seq0)
-        seq1_embedded = self.embedding_function(seq1)
+
+        if two_vars:
+            assert len(seq0) == len(seq1)
+            seq1_embedded = self.embedding_function(seq1)
 
         #TAKES EMBEDDED SEQUENCES AND TURNS THEM INTO 2 SIMILARITY VECTORS
         #   Normal lstm and gru functions
         #   Designed from https://www.researchgate.net/publication/307558687_Siamese_Recurrent_Architectures_for_Learning_Sentence_Similarity
         if self.A_name in ["lstm", "gru"] and not self.bidirectional:
             h_0, _ = self.A_function(seq0_embedded)
-            h_1, _ = self.A_function(seq1_embedded)
-
             indexes_of_end_h0 = (seq0 == self.END).nonzero()[:, 1]
-            indexes_of_end_h1 = (seq1 == self.END).nonzero()[:, 1]
-
             h_0_out = [h_0[i, indexes_of_end_h0[i] - 2].unsqueeze(0) for i in range(len(h_0))]
-            h_1_out = [h_1[i, indexes_of_end_h1[i] - 2].unsqueeze(0) for i in range(len(h_1))]
-
             h_0_out = torch.cat(h_0_out, dim = 0)
-            h_1_out = torch.cat(h_1_out, dim = 0)
+
+            if two_vars:
+                h_1, _ = self.A_function(seq1_embedded)
+                indexes_of_end_h1 = (seq1 == self.END).nonzero()[:, 1]
+                h_1_out = [h_1[i, indexes_of_end_h1[i] - 2].unsqueeze(0) for i in range(len(h_1))]
+                h_1_out = torch.cat(h_1_out, dim = 0)
 
         #   Bidirectional lstm and gru functions
         #   Designed from https://aclanthology.org/W16-1617.pdf
         elif self.A_name in ["lstm", "gru"] and self.bidirectional:
             h_0, _ = self.A_function(seq0_embedded)
-            h_1, _ = self.A_function(seq1_embedded)
-
             h_0 = h_0.reshape(self.batch_size, -1)
-            h_1 = h_1.reshape(self.batch_size, -1)
-
             h_0_out = self.bidirectional_linear(h_0)
-            h_1_out = self.bidirectional_linear(h_1)
+
+            if two_vars:
+                h_1, _ = self.A_function(seq1_embedded)
+                h_1 = h_1.reshape(self.batch_size, -1)
+                h_1_out = self.bidirectional_linear(h_1)
+
         #   Attention based encoder
         elif self.A_name == "attention":
             h_0 = self.A_function(seq0_embedded, mask = self.mask)
-            h_1 = self.A_function(seq1_embedded, mask = self.mask)
-
             h_0 = torch.sigmoid(h_0)
-            h_1 = torch.sigmoid(h_1)
-
             h_0 = h_0.reshape(self.batch_size, -1)
-            h_1 = h_1.reshape(self.batch_size, -1)
-
             h_0_out = self.attention_linear(h_0)
-            h_1_out = self.attention_linear(h_1)
-
             h_0_out = torch.sigmoid(h_0_out)
-            h_0_out = torch.sigmoid(h_1_out)
 
-        distance = self.manhatten_distance(h_0_out, h_1_out)
-        
-        return distance, (h_0_out, h_1_out)
+            if two_vars:
+                h_1 = self.A_function(seq1_embedded, mask = self.mask)
+                h_1 = torch.sigmoid(h_1)
+                h_1 = h_1.reshape(self.batch_size, -1)
+                h_1_out = self.attention_linear(h_1)
+                h_1_out = torch.sigmoid(h_1_out)
+
+        if two_vars:
+            distance = self.manhatten_distance(h_0_out, h_1_out)
+            
+            return distance, (h_0_out, h_1_out)
+        else:
+            return h_0_out
 
