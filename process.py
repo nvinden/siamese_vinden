@@ -157,6 +157,7 @@ def contrastive_loss(v_i, v_j, y, m : float = 1.0):
 
     sim = cs(v_i, v_j)
     sim.to(device)
+    y.to(device)
     l = 0.5 * y * (sim ** 2)
     maxs = torch.max(torch.zeros([sim.shape[0]], device = device, requires_grad = False, dtype = torch.float), m - sim)
     r = 0.5  * (1 - y) * maxs ** 2
