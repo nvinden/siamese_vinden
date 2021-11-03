@@ -111,7 +111,7 @@ def train(save_name):
             print(f"{n_added} entries added, {pairs_found} pairs found...")
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
-            accuracy = save_test_list(model, ds)
+            accuracy = save_test_list(model, ds, save_name)
             add_to_log_list(log_list, total_epoch_loss, accuracy)
             print(f"          Test: {accuracy}")
 
