@@ -634,9 +634,6 @@ class EmbeddingsMasterList():
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
 
-            if i % 5000 == 0:
-                print(f"Embedded {i} names")
-
         self.embeddings.build(self.trees)
         
         model.train()
