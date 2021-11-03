@@ -47,6 +47,15 @@ def train(save_name):
 
     model = model.to(device)
 
+    print("Embedding...")
+    ds.embeddings.embed_all(model)
+    print("Embedding done...")
+
+    print("Adding to dataset...")
+    n_added, pairs_found = ds.add_to_dataset()
+    ds.embeddings.embeddings = None
+    print(f"{n_added} entries added, {pairs_found} pairs found...")
+
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()

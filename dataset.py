@@ -255,6 +255,19 @@ class RDataset(Dataset):
         random.shuffle(self.test_ds)
         random.shuffle(self.train_ds)
 
+        #self.pairs_in_test_set = self._create_pairs_in_test_set(ini["positives"][k_no])
+    
+    def _create_pairs_in_test_set(self, positives):
+        out = dict()
+
+        for row in positives:
+            for word in row:
+                word = emb2str(word)
+
+                out[word] = -1
+        
+        return out
+
     def initialize(self, filename, reprocess : bool = False):
         save_file = os.path.join(self.data_root, self.partition_data_name)
         if not os.path.isfile(save_file) or reprocess:
@@ -567,13 +580,8 @@ class RDataset(Dataset):
     def add_to_dataset(self):
         if self.mode == "train":
             ds = self.train_ds
-            used = self.train_used
         elif self.mode == "test":
             ds = self.test_ds
-            used = self.test_used
-        elif self.mode == "val":
-            ds = self.val_ds
-            used = self.val_used
         else:
             return -1
 
@@ -592,11 +600,12 @@ class RDataset(Dataset):
             nn_idx = self.embeddings.get_nn(name_idx)
             nn_name = index2name[nn_idx]
 
-            if name in pair_dict and not nn_name == pair_dict[name]:
-                if not(name in used and used[name] == nn_name):
+            print(pair_dict[name])
+
+            if not self.are_pairs(name, nn_name):
+                if not self.already_used(name, nn_name):
                     ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
-                    used[name] = nn_name
-                    used[nn_name] = name
+                    self.add_to_used(name, nn_name)
                     n_added += 1
             elif name in pair_dict:
                 n_pairs_found += 1
@@ -621,9 +630,9 @@ class EmbeddingsMasterList():
     def embed_all(self, model):
         self.embeddings = AnnoyIndex(self.dimensions, 'euclidean')
         model.eval()
-        for i in range(len(self.index2name)):
-            name = self.index2name[i]
-            embedded_name = str2emb(name, string_pad = model.n_tokens).unsqueeze(0)
+        for i in range(len(self.master_dataset)):
+            embedded_name = self.master_dataset[i]['name'].unsqueeze(0)
+            str_name = emb2str(embedded_name.squeeze(0))
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
 
