@@ -600,8 +600,6 @@ class RDataset(Dataset):
             nn_idx = self.embeddings.get_nn(name_idx)
             nn_name = index2name[nn_idx]
 
-            print(pair_dict[name])
-
             if not self.are_pairs(name, nn_name):
                 if not self.already_used(name, nn_name):
                     ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
