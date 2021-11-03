@@ -358,7 +358,6 @@ class RDataset(Dataset):
     
     def already_used(self, name1, name2):
         if name1 in self.used and name2 in self.used[name1]:
-            print(self.used[name1])
             return True
         elif name2 in self.used and name1 in self.used[name2]:
             return True
@@ -552,7 +551,7 @@ class RDataset(Dataset):
         return self
 
     def __next__(self):
-        if self.n + self.batch_size <= len(self):
+        if self.n + self.batch_size <= len(self.train_ds):
             if self.mode == "train":
                 entries =  self.train_ds[self.n:self.n + self.batch_size]
             elif self.mode == "test":
@@ -560,7 +559,7 @@ class RDataset(Dataset):
             else:
                 return -1
 
-            print(len(self.train_ds))
+            #print(len(self.train_ds))
 
             self.n += self.batch_size
             entries_concat = dict()
@@ -573,8 +572,6 @@ class RDataset(Dataset):
                     if key not in entries_concat:
                         entries_concat[key] = val
                     else:
-                        print("Entries:", entries_concat[key].shape)
-                        print("Val:", val.shape)
                         entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
         else:
