@@ -167,7 +167,7 @@ def save_test_list(model, ds, save_name):
                 curr_label = label[i].item()
                 jw_distance = jw.get_jaro_distance(name1, name2, winkler=True, scaling=0.1)
 
-                csv.append({"name1": name1, "name2": name2, "model_score": model_score, "JW_scores": jw_distance, "label": curr_label}, ignore_index = True)
+                csv = csv.append({"name1": name1, "name2": name2, "model_score": model_score, "JW_scores": jw_distance, "label": curr_label}, ignore_index = True)
 
             total_accuracy += loss.item()
         
