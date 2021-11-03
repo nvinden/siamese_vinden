@@ -560,6 +560,8 @@ class RDataset(Dataset):
             else:
                 return -1
 
+            print(len(self.train_ds))
+
             self.n += self.batch_size
             entries_concat = dict()
             for row in entries:
