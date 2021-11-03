@@ -571,7 +571,7 @@ class RDataset(Dataset):
                     if key not in entries_concat:
                         entries_concat[key] = val
                     else:
-                        print("Entries": entries_concat[key].shape)
+                        print("Entries:", entries_concat[key].shape)
                         print("Val:", val.shape)
                         entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
