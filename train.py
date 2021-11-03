@@ -48,8 +48,6 @@ def train(save_name):
 
     model = model.to(device)
 
-    save_test_list(model, ds)
-
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
@@ -113,23 +111,22 @@ def train(save_name):
             print(f"{n_added} entries added, {pairs_found} pairs found...")
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
-            #accuracy = save_test_list(model, ds)
-            #add_to_log_list(log_list, total_epoch_loss, accuracy)
+            accuracy = save_test_list(model, ds)
+            add_to_log_list(log_list, total_epoch_loss, accuracy)
             print(f"          Test: {accuracy}")
 
             ds.mode = "train"
 
             ds.shuffle_ds()
         else:
-            pass
-            #add_to_log_list(log_list, total_epoch_loss, accuracy)
+            add_to_log_list(log_list, total_epoch_loss)
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
 
     return total_epoch_loss, accuracy
 
-def save_test_list(model, ds):
+def save_test_list(model, ds, save_name):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     columns = ["name1", "name2", "model_score", "JW_scores", "label"]
     csv = pd.DataFrame(columns = columns)
@@ -145,6 +142,9 @@ def save_test_list(model, ds):
     with torch.no_grad():
         ds.mode = "test"
         for batch_no, data in enumerate(ds):
+            if len(data) == 0:
+                continue
+
             n0 = data['emb0']
             n1 = data['emb1']
             label = data['label']
@@ -160,13 +160,28 @@ def save_test_list(model, ds):
             name_similarity, (v_i, v_j) = model(n0, n1)
             loss = criterion(v_i, v_j, label)
 
+            for i in range(len(n0)):
+                name1 = emb2str(n0[i])
+                name2 = emb2str(n1[i])
+                model_score = name_similarity[i].item()
+                curr_label = label[i].item()
+                jw_distance = jw.get_jaro_distance(name1, name2, winkler=True, scaling=0.1)
+
+                csv.append({"name1": name1, "name2": name2, "model_score": model_score, "JW_scores": jw_distance, "label": curr_label}, ignore_index = True)
+
             total_accuracy += loss.item()
         
     ds.mode = original_mode
 
+    if not os.path.isdir("results"):
+        os.mkdir("results")
+        
+    csv.to_csv("results/" + save_name + ".csv")
+
     total_accuracy /= (batch_no + 1)
 
     return total_accuracy
+
 def test_on_test_set(model, ds):
     original_mode = ds.mode
     jw_k = 0.7
