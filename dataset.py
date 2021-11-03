@@ -296,6 +296,7 @@ class RDataset(Dataset):
             name1 = table.iloc[index, 0]
             name2 = table.iloc[index, 1]
 
+            print(name1)
             emb1 = str2emb(name1)
             emb2 = str2emb(name2)
 
