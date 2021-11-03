@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
+import pandas as pd
 
 import time
 import os
@@ -46,6 +47,8 @@ def train(save_name):
     criterion = contrastive_loss
 
     model = model.to(device)
+
+    save_test_list(model, ds)
 
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -109,9 +112,9 @@ def train(save_name):
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found...")
 
-            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
-            #accuracy = test_on_test_set(model, ds)
-            add_to_log_list(log_list, total_epoch_loss, accuracy)
+            save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
+            #accuracy = save_test_list(model, ds)
+            #add_to_log_list(log_list, total_epoch_loss, accuracy)
             print(f"          Test: {accuracy}")
 
             ds.mode = "train"
@@ -126,6 +129,44 @@ def train(save_name):
 
     return total_epoch_loss, accuracy
 
+def save_test_list(model, ds):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    columns = ["name1", "name2", "model_score", "JW_scores", "label"]
+    csv = pd.DataFrame(columns = columns)
+    csv.astype({'model_score': 'float64'}).dtypes
+    csv.astype({'JW_scores': 'float64'}).dtypes
+    csv.astype({'label': 'int'}).dtypes
+
+    original_mode = ds.mode
+    model.eval()
+    criterion = contrastive_loss
+
+    total_accuracy = 0
+    with torch.no_grad():
+        ds.mode = "test"
+        for batch_no, data in enumerate(ds):
+            n0 = data['emb0']
+            n1 = data['emb1']
+            label = data['label']
+
+            n0.requires_grad = False
+            n1.requires_grad = False
+            label.requires_grad = False
+
+            n0 = n0.to(device)
+            n1 = n1.to(device)
+            label = label.to(device)
+
+            name_similarity, (v_i, v_j) = model(n0, n1)
+            loss = criterion(v_i, v_j, label)
+
+            total_accuracy += loss.item()
+        
+    ds.mode = original_mode
+
+    total_accuracy /= (batch_no + 1)
+
+    return total_accuracy
 def test_on_test_set(model, ds):
     original_mode = ds.mode
     jw_k = 0.7
