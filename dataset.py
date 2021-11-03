@@ -296,7 +296,6 @@ class RDataset(Dataset):
             name1 = table.iloc[index, 0]
             name2 = table.iloc[index, 1]
 
-            print(name1)
             emb1 = str2emb(name1)
             emb2 = str2emb(name2)
 
@@ -368,7 +367,6 @@ class RDataset(Dataset):
 
     def are_pairs(self, name1, name2):
         if name1 in self.pair_dict and name2 in self.pair_dict[name1]:
-            print("PAIRS", self.pair_dict[name1])
             return True
         elif name2 in self.pair_dict and name1 in self.pair_dict[name2]:
             return True
@@ -573,6 +571,8 @@ class RDataset(Dataset):
                     if key not in entries_concat:
                         entries_concat[key] = val
                     else:
+                        print(entries_concat[key].shape)
+                        print(val.shape)
                         entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
         else:
