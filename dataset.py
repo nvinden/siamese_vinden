@@ -559,7 +559,7 @@ class RDataset(Dataset):
                     if key not in entries_concat:
                         entries_concat[key] = val
                     else:
-                        if entries_concat[key].shape[1] == val.shape[1]:
+                        if entries_concat[key].shape[1] != val.shape[1]:
                             print("BROKEN")
                             print(entries_concat[key].shape)
                             print(val.shape)
