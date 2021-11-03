@@ -5,6 +5,7 @@ import csv
 import numpy as np
 import random
 import json
+import pandas as pd
 
 from process import emb2str, str2emb
 from annoy import AnnoyIndex
@@ -168,18 +169,19 @@ class PretrainDataset(Dataset):
 
 class RDataset(Dataset):
     def __init__(self, config, reprocess : bool = False):
-        self.splits = config["ttv_split"]
-        self.initial_set_negatives = config['initial_set_negatives']
+        self.partition_data_name = config["partition_data_name"] + ".json"
+        self.k = config["k"]
+        self.kth = config['kth_example']
+        self.initial_random_negatives = config['initial_random_negatives']
+        self.initial_jeremy_negatives = config['initial_jeremy_negatives']
+        self.test_random_negatives = config['test_random_negatives']
+        self.test_jeremy_negatives = config['test_jeremy_negatives']
         self.batch_size = config["batch_size"]
-
-        assert sum(self.splits) == 1.0
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         data_root = config["data_root"]
         self.data_root = data_root
-
-        R_god_file = os.path.join(data_root, "R_GOD.npy")
 
         ds_master_pair_config = {
             "data_root": config["data_root"],
@@ -197,49 +199,167 @@ class RDataset(Dataset):
             self.pair_dict = self._build_pair_dict()
             np.save(pair_dict_save, self.pair_dict) 
 
-        if not os.path.isfile(R_god_file) or reprocess:
-            self.train_table = dict()
-            self.test_table = dict()
-            self.val_table = dict()
+        #CREATING TRAINING AND TEST SPLITS ON KTH PARTITION
+        self.pair_length = len(self.pair_dataset)
 
-            self.pair_length = len(self.pair_dataset)
-            self.master_length = len(self.master_dataset)
+        self.k_length = self.pair_length // self.k
 
-            break_points_pair = [int(self.pair_length * self.splits[0]), int(self.pair_length * (self.splits[0] + self.splits[1])), int(self.pair_length * (self.splits[0] + self.splits[1] + self.splits[2]))]
-            break_points_master = [int(self.master_length * self.splits[0]), int(self.master_length * (self.splits[0] + self.splits[1])), int(self.master_length * (self.splits[0] + self.splits[1] + self.splits[2]))]
+        self.partitions = dict()
+        self.partitions["positives"] = [self.pair_dataset.table[i:i + self.k_length] for i in range(0, self.pair_length, self.k_length)]
 
-            self.train_table['pairs'] = self.pair_dataset.table[0:break_points_pair[0]].clone()
-            self.train_table['master'] = self.master_dataset.table[0:break_points_master[0]].clone()
+        self.master_cart_product_length = len(self.master_dataset) ** 2
 
-            self.test_table['pairs'] = self.pair_dataset.table[break_points_pair[0]:break_points_pair[1]].clone()
-            self.test_table['master'] = self.master_dataset.table[break_points_master[0]:break_points_master[1]].clone()
-
-            self.val_table['pairs'] = self.pair_dataset.table[break_points_pair[1]:break_points_pair[2]].clone()
-            self.val_table['master'] = self.master_dataset.table[break_points_master[1]:break_points_master[2]].clone()
-
-            total_list = (self.splits, self.train_table, self.test_table, self.val_table)
-            np.save(R_god_file, total_list, allow_pickle = True)
-        else:
-            total_list = np.load(R_god_file, allow_pickle = True)
-            self.splits, self.train_table, self.test_table, self.val_table = total_list
-
-            assert self.splits == config['ttv_split']
-
-        self.master_cart_product_length_train = len(self.train_table['master']) ** 2
-        self.master_cart_product_length_test = len(self.test_table['master']) ** 2
-        self.master_cart_product_length_val = len(self.val_table['master']) ** 2
-
-        self.train_ds = list()
-        self.test_ds = list()
-        self.val_ds = list()
-
-        self.train_used = dict()
-        self.test_used = dict()
-        self.val_used = dict()
+        self.ds = list()
+        self.used = dict()
 
         self.initialize(reprocess)
+        self.create_train_test_sets()
 
         self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset)
+
+    def create_train_test_sets(self):
+        kth = self.kth
+        ini = self.partitions
+
+        #creating test set
+        self.test_ds = list()
+        for row in ini["positives"][kth]:
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+        for i, row in enumerate(ini["random"][kth]):
+            if i >= self.test_random_negatives:
+                break
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+        for i, row in enumerate(ini["jeremy"][kth]):
+            if i >= self.test_jeremy_negatives:
+                break
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
+
+
+        #creating train set
+        self.train_ds = list()
+        for k_no in range(self.k):
+            if k_no == kth:
+                continue
+
+            for row in ini["positives"][k_no]:
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+            for i, row in enumerate(ini["random"][k_no]):
+                if i >= self.initial_random_negatives:
+                    break
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+            for i, row in enumerate(ini["jeremy"][k_no]):
+                if i >= self.initial_jeremy_negatives:
+                    break
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
+
+        random.shuffle(self.test_ds)
+        random.shuffle(self.train_ds)
+
+    def initialize(self, filename, reprocess : bool = False):
+        save_file = os.path.join(self.data_root, self.partition_data_name)
+        if not os.path.isfile(save_file) or reprocess:
+            self.partitions["random"] = self.get_random_list(self.initial_random_negatives if self.initial_random_negatives > self.test_random_negatives else self.test_random_negatives)
+            self.partitions["jeremy"] = self.get_jeremy_list(self.initial_jeremy_negatives if self.initial_jeremy_negatives > self.test_jeremy_negatives else self.test_jeremy_negatives)
+
+            random_k_length = len(self.partitions["random"]) // self.k
+            jeremy_k_length = len(self.partitions["jeremy"]) // self.k
+
+            self.partitions["random"] = [self.partitions["random"][i:i + random_k_length] for i in range(0, len(self.partitions["random"]), random_k_length)]
+            self.partitions["jeremy"] = [self.partitions["jeremy"][i:i + jeremy_k_length] for i in range(0, len(self.partitions["jeremy"]), jeremy_k_length)]
+
+            self.save_ds()
+        else:
+            self.load_ds()
+
+    def get_jeremy_list(self, length):
+        out = torch.empty(0)
+
+        table = pd.read_csv("data/pairs.csv")
+
+        i = 0
+        while i < length:
+            index = random.randint(0, len(table))
+
+            name1 = table.iloc[index, 0]
+            name2 = table.iloc[index, 1]
+
+            emb1 = str2emb(name1)
+            emb2 = str2emb(name2)
+
+            embs = torch.cat([emb1.unsqueeze(0), emb2.unsqueeze(0)], dim = 0)
+
+            used_key = name1 + "_" + name2
+
+            if self.already_used(name1, name2):
+                continue
+            elif self.are_pairs(name1, name2):
+                continue
+            else:
+                if len(out) == 0:
+                    out = embs.unsqueeze(0)
+                else:
+                    out = torch.cat([out, embs.unsqueeze(0)], dim = 0)
+                
+                self.add_to_used(name1, name2)
+                i += 1
+        return out
+
+    def get_random_list(self, length):
+        out = torch.empty(0)
+        ds = self.master_dataset.table
+        cart_length = len(ds) ** 2
+        i = 0
+        while i < length:
+            index = random.randint(0, cart_length)
+
+            index1 = int(index / len(ds))
+            index2 = int(index % len(ds))
+
+            name1 = emb2str(ds[index1])
+            name2 = emb2str(ds[index2])
+
+            embs = torch.cat([ds[index1].unsqueeze(0), ds[index2].unsqueeze(0)], dim = 0)
+
+            if self.already_used(name1, name2):
+                continue
+            elif self.are_pairs(name1, name2):
+                continue
+            else:
+                if len(out) == 0:
+                    out = embs.unsqueeze(0)
+                else:
+                    out = torch.cat([out, embs.unsqueeze(0)], dim = 0)
+                
+                self.add_to_used(name1, name2)
+                i += 1
+        return out
+
+    def add_to_used(self, name1, name2):
+        if name1 not in self.used:
+            self.used[name1] = list()
+        if name2 not in self.used:
+            self.used[name2] = list()
+
+        self.used[name1].append(name2)
+        self.used[name2].append(name1)
+    
+    def already_used(self, name1, name2):
+        if name1 in self.used and name2 in self.used[name1]:
+            print(self.used[name1])
+            return True
+        elif name2 in self.used and name1 in self.used[name2]:
+            return True
+        
+        return False
+
+    def are_pairs(self, name1, name2):
+        if name1 in self.pair_dict and name2 in self.pair_dict[name1]:
+            print("PAIRS", self.pair_dict[name1])
+            return True
+        elif name2 in self.pair_dict and name1 in self.pair_dict[name2]:
+            return True
+        
+        return False
 
     def set_mode(self, mode : str):
         self.mode = mode
@@ -251,8 +371,15 @@ class RDataset(Dataset):
             name0 = emb2str(pair["name0"])
             name1 = emb2str(pair["name1"])
 
-            pair_dict[name0] = name1
-            pair_dict[name1] = name0
+            if name0 not in pair_dict:
+                pair_dict[name0] = list()
+            if name1 not in pair_dict:
+                pair_dict[name1] = list()
+            
+            if name1 not in pair_dict[name0]:
+                pair_dict[name0].append(name1)
+            if name0 not in pair_dict[name1]:
+                pair_dict[name1].append(name0)
 
         return pair_dict
 
@@ -352,90 +479,23 @@ class RDataset(Dataset):
         entry = {"emb0": pair[0], "emb1": pair[1], "label": label}
         return entry
 
-    def initialize(self, reprocess : bool = False):
-        save_file = os.path.join(self.data_root, "initialized.json")
-        orignal_mode = self.mode
-        if not os.path.isfile(save_file) or reprocess:
-            self.mode = "train"
-            for idx in range(len(self.train_table['pairs'])):
-                entry = self.get_entry(idx, True, unique = True)
-                self.train_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.train_used[name0] = name1
-                self.train_used[name1] = name0
-            for idx in range(self.initial_set_negatives):
-                entry = self.get_entry(None, False, unique = True)
-                self.train_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.train_used[name0] = name1
-                self.train_used[name1] = name0
-            self.shuffle_ds()
-            
-            self.mode = "test"
-            for idx in range(len(self.test_table['pairs'])):
-                entry = self.get_entry(idx, True, unique = True)
-                self.test_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.test_used[name0] = name1
-                self.test_used[name1] = name0
-            for idx in range(len(self.test_table['pairs'])):
-                entry = self.get_entry(None, False, unique = True)
-                self.test_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.test_used[name0] = name1
-                self.test_used[name1] = name0
-            self.shuffle_ds()
-
-            self.mode = "val"
-            for idx in range(len(self.val_table['pairs'])):
-                entry = self.get_entry(idx, True, unique = True)
-                self.test_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.val_used[name0] = name1
-                self.val_used[name1] = name0
-            for idx in range(len(self.val_table['pairs'])):
-                entry = self.get_entry(None, False, unique = True)
-                self.val_ds.append(entry)
-                name0 = emb2str(entry['emb0'])
-                name1 = emb2str(entry['emb1'])
-                self.val_used[name0] = name1
-                self.val_used[name1] = name0
-            self.shuffle_ds()
-
-            self.mode = orignal_mode
-
-            self.save_ds()
-        else:
-            self.load_ds()
-
     def save_ds(self):
-        save_file = os.path.join(self.data_root, "initialized.json")
+        save_file = os.path.join(self.data_root, self.partition_data_name)
         with open(save_file, 'w') as fout:
-            json.dump({"train": self.train_ds, "test": self.test_ds, "val": self.val_ds, \
-                "train_used": self.train_used, "test_used": self.test_used, "val_used": self.val_used}, \
+            json.dump({"positives": self.partitions["positives"], "random": self.partitions["random"], "jeremy": self.partitions["jeremy"], \
+                "used": self.used}, \
                 fout, cls = TorchArrayEncoder)
 
     def load_ds(self):
-        save_file = os.path.join(self.data_root, "initialized.json")
+        save_file = os.path.join(self.data_root, self.partition_data_name)
         with open(save_file, "r") as fin:
             decoded = json.load(fin)
 
-            self.train_ds = decoded['train']
-            self.test_ds = decoded['test']
-            self.val_ds = decoded['val']
+            self.partitions['positives'] = torch.tensor(decoded['positives'])
+            self.partitions['random'] = torch.tensor(decoded['random'])
+            self.partitions['jeremy'] = torch.tensor(decoded['jeremy'])
 
-            self.train_used = decoded["train_used"]
-            self.test_used = decoded["test_used"]
-            self.val_used = decoded["val_used"]
-
-            self.train_ds = [{"emb0": torch.tensor(entry["emb0"]), "emb1": torch.tensor(entry["emb1"]), "label": entry["label"]} for entry in self.train_ds]
-            self.test_ds = [{"emb0": torch.tensor(entry["emb0"]), "emb1": torch.tensor(entry["emb1"]), "label": entry["label"]} for entry in self.test_ds]
-            self.val_ds = [{"emb0": torch.tensor(entry["emb0"]), "emb1": torch.tensor(entry["emb1"]), "label": entry["label"]} for entry in self.val_ds]
+            self.used = decoded["used"]
 
     def shuffle_ds(self):
         if self.mode == "train":
@@ -474,8 +534,6 @@ class RDataset(Dataset):
             self.n = 0
         elif self.mode == "test":
             self.n = 0
-        elif self.mode == "val":
-            self.n = 0
         else:
             return -1
 
@@ -487,8 +545,6 @@ class RDataset(Dataset):
                 entries =  self.train_ds[self.n:self.n + self.batch_size]
             elif self.mode == "test":
                 entries =  self.test_ds[self.n:self.n + self.batch_size]
-            elif self.mode == "val":
-                entries =  self.val_ds[self.n:self.n + self.batch_size]
             else:
                 return -1
 
@@ -503,10 +559,6 @@ class RDataset(Dataset):
                     if key not in entries_concat:
                         entries_concat[key] = val
                     else:
-                        print(entries_concat[key].shape)
-                        print(val.shape)
-                        print(entries_concat[key])
-                        print(val)
                         entries_concat[key] = torch.cat([entries_concat[key], val], dim = 0)
             return entries_concat
         else:
@@ -582,8 +634,8 @@ class EmbeddingsMasterList():
         
         model.train()
 
-    def get_nn(self, index):
-        return self.embeddings.get_nns_by_item(index, 2)[1]
+    def get_nn(self, index, number = 1):
+        return self.embeddings.get_nns_by_item(index, number + 1)[1]
 
     def _build_dict(self):
         index = 0

@@ -24,8 +24,6 @@ def train(save_name):
 
     DATASET_CONFIG, TRAIN_CONFIG, MODEL_KWARGS = load_json_config(json_file)
 
-    ttv_splits = DATASET_CONFIG['ttv_split']
-
     #LOADING FROM SAVE OR CREATING NEW DATA
     if not os.path.isfile(save_file):
         model = Siamese(TRAIN_CONFIG, MODEL_KWARGS)
@@ -120,7 +118,8 @@ def train(save_name):
 
             ds.shuffle_ds()
         else:
-            add_to_log_list(log_list, total_epoch_loss, accuracy)
+            pass
+            #add_to_log_list(log_list, total_epoch_loss, accuracy)
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
