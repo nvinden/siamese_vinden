@@ -13,7 +13,7 @@
     },
 
     "TRAIN_CONFIG": {
-        "lr": 1e-3,
+        "lr": 3e-4,
         "n_epochs": 150,
         "epoch_reset": false,
         "A_name": "gru",
