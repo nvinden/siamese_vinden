@@ -605,7 +605,7 @@ class RDataset(Dataset):
                     ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
                     self.add_to_used(name, nn_name)
                     n_added += 1
-            elif name in pair_dict:
+            else:
                 n_pairs_found += 1
 
         return n_added, n_pairs_found

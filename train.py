@@ -101,6 +101,7 @@ def train(save_name):
         print(f"\nEpoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
         if (epoch + 1) % 10 == 0:
+            '''
             print("Embedding...")
             ds.embeddings.embed_all(model)
             print("Embedding done...")
@@ -109,6 +110,7 @@ def train(save_name):
             n_added, pairs_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found...")
+            '''
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
             accuracy = save_test_list(model, ds, save_name)
@@ -217,7 +219,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["run01", ]
+    config_list = ["only_initial_1", "only_initial_2", "only_initial_3"]
 
     log_file_name = "log.txt"
     debug = True

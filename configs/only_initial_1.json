@@ -1,14 +1,13 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "gru_test_example",
+        "partition_data_name": "initial_testing_1",
         "data_root": "data/",
-        "master_data_file": "gru_test_example_on_kth",
         "string_pad": 30,
         "k": 5,
         "kth_example": 0,
         "initial_random_negatives": 25000,
         "initial_jeremy_negatives": 25000,
-        "test_random_negatives": 0,
+        "test_random_negatives": 25000,
         "test_jeremy_negatives": 25000,
         "batch_size": 32
     },
