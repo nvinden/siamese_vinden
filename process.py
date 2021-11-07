@@ -131,14 +131,16 @@ def str2emb(string, string_pad = 30):
 def contrastive_loss(v_i, v_j, y, m : float = 1.0):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    cs = nn.CosineSimilarity(dim=1, eps=1e-8)
-
-    sim = cs(v_i, v_j)
+    sim = 1 - nn.functional.cosine_similarity(v_i, v_j)
     sim = sim.to(device)
     y = y.to(device)
 
     l = 0.5 * y * (sim ** 2)
-    maxs = torch.max(torch.zeros([sim.shape[0]], device = device, requires_grad = False, dtype = torch.float), m - sim)
+
+    zeros = torch.zeros([sim.shape[0]], device = device, requires_grad = False, dtype = torch.float)
+    maxs = torch.max(zeros, m - sim)
     r = 0.5  * (1 - y) * (maxs ** 2)
 
-    return torch.mean(l + r)
+    together = l + r
+
+    return torch.mean(together)
