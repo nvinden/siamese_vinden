@@ -184,11 +184,9 @@ def save_test_list(model, ds, save_name):
 
 def test_on_test_set(model, ds):
     original_mode = ds.mode
-    jw_k = 0.7
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
     total_accuracy = 0
-    total_accuracy_jw = 0
     criterion = contrastive_loss
     with torch.no_grad():
         ds.mode = "test"

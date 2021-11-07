@@ -14,9 +14,9 @@
 
     "TRAIN_CONFIG": {
         "lr": 3e-4,
-        "n_epochs": 150,
+        "n_epochs": 75,
         "epoch_reset": false,
-        "A_name": "gru",
+        "A_name": "lstm",
         "embedding_type": "one_hot",
         "n_tokens": 30,
         "scheduler_step_size": 3,
@@ -30,6 +30,6 @@
         "bias": true,
         "batch_first": true,
         "dropout": 0,
-        "bidirectional": false
+        "bidirectional": true
     }
 }

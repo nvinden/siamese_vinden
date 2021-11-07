@@ -84,6 +84,9 @@ class Siamese(nn.Module):
 
         return out
 
+    def cosine_similarity(self, h_0, h_1):
+        return nn.functional.cosine_similarity(h_0, h_1)
+
     def forward(self, seq0, *argv):
         self.batch_size = len(seq0)
 
@@ -143,7 +146,7 @@ class Siamese(nn.Module):
                 h_1_out = torch.sigmoid(h_1_out)
 
         if two_vars:
-            distance = self.manhatten_distance(h_0_out, h_1_out)
+            distance = self.cosine_similarity(h_0_out, h_1_out)
             
             return distance, (h_0_out, h_1_out)
         else:
