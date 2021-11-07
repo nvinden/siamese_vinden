@@ -92,9 +92,6 @@ def train(save_name):
 
         scheduler.step()
 
-        if epoch >= 20:
-            save_data(save_file, epoch, model, optim, scheduler, log_list, ds)
-
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
 
@@ -111,6 +108,7 @@ def train(save_name):
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found...")
             '''
+
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
             accuracy = save_test_list(model, ds, save_name)
@@ -219,7 +217,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["only_initial_1", "only_initial_2", "only_initial_3"]
+    config_list = ["only_initial_0", "only_initial_1", "only_initial_2", "only_initial_3"]
 
     log_file_name = "log.txt"
     debug = True
