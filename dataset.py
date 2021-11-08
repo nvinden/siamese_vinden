@@ -178,6 +178,11 @@ class RDataset(Dataset):
         self.test_jeremy_negatives = config['test_jeremy_negatives']
         self.batch_size = config["batch_size"]
 
+        if "hard_neg_bandwith" in config:
+            self.hard_neg_bandwith = config["hard_neg_bandwith"]
+        else:
+            self.hard_neg_bandwith = None
+
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         data_root = config["data_root"]
@@ -216,6 +221,7 @@ class RDataset(Dataset):
         self.create_train_test_sets()
 
         self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset)
+        self.emb_idx = 0
 
     def create_train_test_sets(self):
         kth = self.kth
@@ -587,14 +593,21 @@ class RDataset(Dataset):
 
         n_added = 0
         n_pairs_found = 0
+        n_already_used = 0
+
+        n_iterations = 0
 
         index2name = self.embeddings.index2name
         name2index = self.embeddings.name2index
         pair_dict = self.pair_dict.item()
         pair_dict_keys = list(pair_dict)
 
-        for i in range(len(pair_dict_keys)):
-            name = pair_dict_keys[i]
+        table = self.master_dataset.table
+
+        while self.emb_idx < len(table):
+            name = table[self.emb_idx]
+            name = emb2str(name)
+
             name_idx = name2index[name]
 
             nn_idx = self.embeddings.get_nn(name_idx)
@@ -605,10 +618,20 @@ class RDataset(Dataset):
                     ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
                     self.add_to_used(name, nn_name)
                     n_added += 1
+                else:
+                    n_already_used += 1
             else:
                 n_pairs_found += 1
 
-        return n_added, n_pairs_found
+            if self.emb_idx == len(table) - 1:
+                self.emb_idx = 0
+
+            n_iterations += 1
+
+            if n_iterations == len(pair_dict_keys) or (self.hard_neg_bandwith is not None and n_added >= self.hard_neg_bandwith):
+                break
+
+        return n_added, n_pairs_found, n_already_used
 
 class EmbeddingsMasterList():
     def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50):

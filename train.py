@@ -98,18 +98,6 @@ def train(save_name):
         print(f"\nEpoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
         if (epoch + 1) % 10 == 0:
-            '''
-            print("Embedding...")
-            ds.embeddings.embed_all(model)
-            print("Embedding done...")
-
-            print("Adding to dataset...")
-            n_added, pairs_found = ds.add_to_dataset()
-            ds.embeddings.embeddings = None
-            print(f"{n_added} entries added, {pairs_found} pairs found...")
-            '''
-
-
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
             accuracy = save_test_list(model, ds, save_name)
             add_to_log_list(log_list, total_epoch_loss, accuracy)
@@ -120,6 +108,16 @@ def train(save_name):
             ds.shuffle_ds()
         else:
             add_to_log_list(log_list, total_epoch_loss)
+
+        if (epoch + 1) % 3 == 0:
+            print("Embedding...")
+            ds.embeddings.embed_all(model)
+            print("Embedding done...")
+
+            print("Adding to dataset...")
+            n_added, pairs_found, already_found = ds.add_to_dataset()
+            ds.embeddings.embeddings = None
+            print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
@@ -215,7 +213,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["only_initial_2", "only_initial_3"]
+    config_list = ["active_test_0", ]
 
     log_file_name = "log.txt"
     debug = True
