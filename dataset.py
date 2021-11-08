@@ -627,8 +627,9 @@ class RDataset(Dataset):
                 self.emb_idx = 0
 
             n_iterations += 1
+            self.emb_idx += 1
 
-            if n_iterations == len(pair_dict_keys) or (self.hard_neg_bandwith is not None and n_added >= self.hard_neg_bandwith):
+            if n_iterations == len(table) or (self.hard_neg_bandwith is not None and n_added >= self.hard_neg_bandwith):
                 break
 
         return n_added, n_pairs_found, n_already_used
