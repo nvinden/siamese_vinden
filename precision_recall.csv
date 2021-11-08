@@ -1,0 +1,6 @@
+,run_name,avg_precision_model,avg_precision_JW,A_name,bidirectional,kth,lr,n_epochs,testing_initial_jeremy_negatives,testing_initial_random_negatives,training_initial_jeremy_negatives,training_initial_random_negatives
+0,active_test_1.csv,0.5370565733568381,0.8822257838290608,lstm,1.0,0.0,0.0003,75.0,5000.0,5000.0,0.0,20000.0
+1,only_initial_0.csv,0.9610455002032035,0.9290332394870077,lstm,1.0,0.0,0.0003,75.0,2500.0,2500.0,10000.0,10000.0
+2,only_initial_1.csv,0.9316390390486966,0.880640460954011,lstm,1.0,0.0,0.0003,75.0,5000.0,5000.0,20000.0,20000.0
+3,only_initial_2.csv,0.8833321735285633,0.803958271309759,lstm,1.0,0.0,0.0003,75.0,5000.0,5000.0,40000.0,20000.0
+4,test.csv,0.930078784930432,0.8788678630757252,lstm,1.0,0.0,0.0003,75.0,5000.0,5000.0,0.0,20000.0

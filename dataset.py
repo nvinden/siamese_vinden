@@ -183,6 +183,11 @@ class RDataset(Dataset):
         else:
             self.hard_neg_bandwith = None
 
+        if "embedding_bandwith" in config:
+            self.embedding_bandwith = config["embedding_bandwith"]
+        else:
+            self.embedding_bandwith = None
+
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         data_root = config["data_root"]
@@ -220,7 +225,7 @@ class RDataset(Dataset):
         self.initialize(reprocess)
         self.create_train_test_sets()
 
-        self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset)
+        self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset, embedding_bandwith = self.embedding_bandwith)
         self.emb_idx = 0
 
     def create_train_test_sets(self):
@@ -635,13 +640,17 @@ class RDataset(Dataset):
         return n_added, n_pairs_found, n_already_used
 
 class EmbeddingsMasterList():
-    def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50):
+    def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50, embedding_bandwith = None):
         self.pair_dataset = pair_dataset
         self.master_dataset = master_dataset
+
+        self.embedding_bandwith = embedding_bandwith
 
         self.trees = trees
         self.dimensions = dimensions
         self.embeddings = None
+
+        self.i = 0
 
         if os.path.isfile("data/index2name.npy") and os.path.isfile("data/name2index.npy"):
             self.index2name = np.load("data/index2name.npy", allow_pickle = True).item()

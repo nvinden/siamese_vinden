@@ -1,22 +1,21 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "active_test_0",
+        "partition_data_name": "active_test_2",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
         "kth_example": 0,
         "initial_random_negatives": 25000,
-        "initial_jeremy_negatives": 0,
+        "initial_jeremy_negatives": 80000,
         "test_random_negatives": 25000,
-        "test_jeremy_negatives": 25000,
+        "test_jeremy_negatives": 50000,
         "batch_size": 32,
-        "hard_neg_bandwith": 2500,
-        "embedding_bandwith": 50000
+        "hard_neg_bandwith": 2500
     },
 
     "TRAIN_CONFIG": {
         "lr": 3e-4,
-        "n_epochs": 75,
+        "n_epochs": 80,
         "epoch_reset": false,
         "A_name": "lstm",
         "embedding_type": "one_hot",
