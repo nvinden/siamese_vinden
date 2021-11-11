@@ -23,6 +23,7 @@ if __name__ == "__main__":
         json_file = join("configs", file.replace(".csv", ".json"))
         DATASET_CONFIG, TRAIN_CONFIG, MODEL_KWARGS = load_json_config(json_file)
 
+
         results = pd.read_csv(join("results", file))
 
         training_initial_random_negatives = int(DATASET_CONFIG['initial_random_negatives'] / DATASET_CONFIG['k'] * (DATASET_CONFIG['k'] - 1))

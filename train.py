@@ -38,31 +38,33 @@ def train(save_name):
         start_epoch = 0
     else:
         start_epoch, model, optim, scheduler, log_list, ds = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
-
-        if 'epoch_reset' in TRAIN_CONFIG and TRAIN_CONFIG['epoch_reset']:
-            start_epoch = 0
-            optim = torch.optim.Adam(model.parameters(), lr=TRAIN_CONFIG['lr'])
-            scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
-
     criterion = contrastive_loss
 
     model = model.to(device)
 
+    #preparing saving directory
+    result_directory = os.path.join("results", save_name)
+    if not os.path.isdir(result_directory):
+        os.mkdir(result_directory)
+    if not os.path.isdir(os.path.join(result_directory, "train")):
+        os.mkdir(os.path.join(result_directory, "train"))
+    if not os.path.isdir(os.path.join(result_directory, "test")):
+        os.mkdir(os.path.join(result_directory, "test"))
+
+    #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
         model.requires_grad_()
         start_time = time.time()
 
-        #locking parameters of the encoder for first number of epochs
-        if TRAIN_CONFIG["A_name"] in ["attention", ] and "attention_lock_encoder_epochs" in TRAIN_CONFIG:
-            epoch_lock = TRAIN_CONFIG["attention_lock_encoder_epochs"]
-            if epoch > epoch_lock:
-                model.A_function.training = False
-            else:
-                model.A_function.training = True
-
         total_epoch_loss = 0
         total_pairs = len(ds)
+
+        data_save_condition = (epoch % 5 == 0)
+
+        if data_save_condition:
+            model_dict = dict()
+            dict_index = 0
 
         ds.mode = "train"
         for batch_no, data in enumerate(ds):
@@ -87,8 +89,28 @@ def train(save_name):
             loss.backward()
             optim.step()
 
+            # Saving dat
+            if data_save_condition:
+                name1_list = [emb2str(i) for i in n0]
+                name2_list = [emb2str(i) for i in n1]
+
+                for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity.detach().numpy(), label.detach().numpy()):
+                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod, "label": lab}
+                    dict_index += 1
+
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
+
+        if data_save_condition:
+            path_train = os.path.join(result_directory, "train", f"epoch{epoch}.csv")
+            path_test = os.path.join(result_directory, "test", f"epoch{epoch}.csv")
+            df = pd.DataFrame.from_dict(model_dict, "index")
+            df.to_csv(path_train)
+
+            # Run on test set as well
+            accuracy = save_test_list(model, ds, path_test)
+
+            save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
 
         scheduler.step()
 
@@ -97,6 +119,7 @@ def train(save_name):
 
         print(f"\nEpoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
+        '''
         if (epoch + 1) % 10 == 0:
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
             accuracy = save_test_list(model, ds, save_name)
@@ -108,7 +131,10 @@ def train(save_name):
             ds.shuffle_ds()
         else:
             add_to_log_list(log_list, total_epoch_loss)
+            ds.shuffle_ds()
+        '''
 
+        '''
         if (epoch + 1) % 3 == 0:
             print("Embedding...")
             ds.embeddings.embed_all(model)
@@ -118,6 +144,7 @@ def train(save_name):
             n_added, pairs_found, already_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
+        '''
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
@@ -126,11 +153,9 @@ def train(save_name):
 
 def save_test_list(model, ds, save_name):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    columns = ["name1", "name2", "model_score", "JW_scores", "label"]
-    csv = pd.DataFrame(columns = columns)
-    csv.astype({'model_score': 'float64'}).dtypes
-    csv.astype({'JW_scores': 'float64'}).dtypes
-    csv.astype({'label': 'int'}).dtypes
+
+    model_dict = dict()
+    dict_index = 0
 
     original_mode = ds.mode
     model.eval()
@@ -163,18 +188,16 @@ def save_test_list(model, ds, save_name):
                 name2 = emb2str(n1[i])
                 model_score = name_similarity[i].item()
                 curr_label = label[i].item()
-                jw_distance = jw.get_jaro_distance(name1, name2, winkler=True, scaling=0.1)
 
-                csv = csv.append({"name1": name1, "name2": name2, "model_score": model_score, "JW_scores": jw_distance, "label": curr_label}, ignore_index = True)
+                model_dict[dict_index] = {"name1": name1, "name2": name2, "model_score": model_score, "label": curr_label}
+                dict_index += 1
 
             total_accuracy += loss.item()
         
     ds.mode = original_mode
-
-    if not os.path.isdir("results"):
-        os.mkdir("results")
         
-    csv.to_csv("results/" + save_name + ".csv")
+    df = pd.DataFrame.from_dict(model_dict, "index")
+    df.to_csv(save_name)
 
     total_accuracy /= (batch_no + 1)
 
@@ -213,7 +236,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["active_test_2", ]
+    config_list = ["init_11_25", "init_11_50", "init_11_100"]
 
     log_file_name = "log.txt"
     debug = True
