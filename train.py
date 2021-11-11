@@ -149,7 +149,7 @@ def train(save_name):
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
 
-    return total_epoch_loss, accuracy
+    return 0, 0
 
 def save_test_list(model, ds, save_name):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
