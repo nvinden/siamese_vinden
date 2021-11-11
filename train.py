@@ -94,7 +94,7 @@ def train(save_name):
                 name1_list = [emb2str(i) for i in n0]
                 name2_list = [emb2str(i) for i in n1]
 
-                for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity.detach().numpy(), label.detach().numpy()):
+                for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity, label):
                     model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod, "label": lab}
                     dict_index += 1
 
