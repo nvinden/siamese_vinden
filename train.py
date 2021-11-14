@@ -236,7 +236,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["init_21_25", "init_21_100", "init_41_25", "init_41_50", "init_41_100"]
+    config_list = ["init_21_100", "init_41_25", "init_41_50", "init_41_100"]
 
     log_file_name = "log.txt"
     debug = True
