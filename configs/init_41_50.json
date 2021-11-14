@@ -1,6 +1,6 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "init_41_25",
+        "partition_data_name": "init_41_50",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
@@ -25,7 +25,7 @@
 
     "MODEL_KWARGS": {
         "input_size": 26,
-        "hidden_size": 25,
+        "hidden_size": 50,
         "num_layers": 1,
         "bias": true,
         "batch_first": true,
