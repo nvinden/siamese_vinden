@@ -102,8 +102,8 @@ def train(save_name):
             total_epoch_loss += loss.item()
 
         if data_save_condition:
-            path_train = os.path.join(result_directory, "train", f"epoch{epoch}.csv")
-            path_test = os.path.join(result_directory, "test", f"epoch{epoch}.csv")
+            path_train = os.path.join(result_directory, "train", f"epoch{str(epoch).zfill(3)}.csv")
+            path_test = os.path.join(result_directory, "test", f"epoch{str(epoch).zfill(3)}.csv")
             df = pd.DataFrame.from_dict(model_dict, "index")
             df.to_csv(path_train)
 
@@ -236,7 +236,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["init_21_100", "init_41_25", "init_41_50", "init_41_100"]
+    config_list = ["init_11_25", ]
 
     log_file_name = "log.txt"
     debug = True
