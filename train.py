@@ -95,7 +95,7 @@ def train(save_name):
                 name2_list = [emb2str(i) for i in n1]
 
                 for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity, label):
-                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod, "label": lab}
+                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod.item(), "label": lab.item()}
                     dict_index += 1
 
             #ADDING TO DIAGNOSTICS
@@ -236,7 +236,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["init_11_25", ]
+    config_list = ["step2_41_50", ]
 
     log_file_name = "log.txt"
     debug = True
