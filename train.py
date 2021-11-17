@@ -236,7 +236,7 @@ def test_on_test_set(model, ds):
     return total_accuracy
 
 if __name__ == '__main__':
-    config_list = ["step2_41_50", ]
+    config_list = ["step2_41_50_k1", "step2_41_50_k2", "step2_41_50_k3", "step2_41_50_k4"]
 
     log_file_name = "log.txt"
     debug = True
