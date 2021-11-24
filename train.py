@@ -61,8 +61,6 @@ def train(save_name, k):
     if not os.path.isdir(os.path.join(result_directory, "val")):
         os.mkdir(os.path.join(result_directory, "val"))
 
-    TRAIN_CONFIG["n_epochs"] = 16
-
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -72,7 +70,7 @@ def train(save_name, k):
         total_epoch_loss = 0
         total_pairs = len(ds)
 
-        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1)# and epoch != 0
+        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
 
         if data_save_condition:
             model_dict = dict()
@@ -141,7 +139,7 @@ def train(save_name, k):
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
-        print(f"\nEpoch {epoch + 1}:")
+        print(f"Epoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
         '''
         if (epoch + 1) % 10 == 0:
@@ -178,9 +176,10 @@ def train(save_name, k):
     #SAVING LIST ON BEST
     best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
     _, best_model, _, _, _, _, _  = load_data(best_save_file, TRAIN_CONFIG, MODEL_KWARGS)
-    path_test = os.path.join(result_directory, "test.csv")
+    path_test = os.path.join(result_directory, f"test_k{k}.csv")
+    f_score = save_list(best_model, ds, path_test, k, "test")
 
-    save_list(best_model, ds, path_test, k, "test")
+    print(f"Finished testing with f-score of {f_score}")
 
     return 0, 0
 
