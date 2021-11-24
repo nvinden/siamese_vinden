@@ -72,7 +72,7 @@ def train(save_name, k):
         total_epoch_loss = 0
         total_pairs = len(ds)
 
-        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
+        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1)# and epoch != 0
 
         if data_save_condition:
             model_dict = dict()
