@@ -168,10 +168,10 @@ class PretrainDataset(Dataset):
         return {"name": name}
 
 class RDataset(Dataset):
-    def __init__(self, config, reprocess : bool = False):
+    def __init__(self, config, k, reprocess : bool = False):
         self.partition_data_name = config["partition_data_name"] + ".json"
         self.k = config["k"]
-        self.kth = config['kth_example']
+        self.kth = k
         self.initial_random_negatives = config['initial_random_negatives']
         self.initial_jeremy_negatives = config['initial_jeremy_negatives']
         self.test_random_negatives = config['test_random_negatives']
@@ -230,6 +230,7 @@ class RDataset(Dataset):
 
     def create_train_test_sets(self):
         kth = self.kth
+        val_kth = self.kth - 1 if self.kth - 1 >= 0 else self.k - 1
         ini = self.partitions
 
         #creating test set
@@ -245,11 +246,22 @@ class RDataset(Dataset):
                 break
             self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
 
+        self.val_ds = list()        
+        for row in ini["positives"][val_kth]:
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+        for i, row in enumerate(ini["random"][val_kth]):
+            if i >= self.test_random_negatives:
+                break
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+        for i, row in enumerate(ini["jeremy"][val_kth]):
+            if i >= self.test_jeremy_negatives:
+                break
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
 
         #creating train set
         self.train_ds = list()
         for k_no in range(self.k):
-            if k_no == kth:
+            if k_no == kth or k_no == val_kth:
                 continue
 
             for row in ini["positives"][k_no]:
@@ -556,6 +568,8 @@ class RDataset(Dataset):
             self.n = 0
         elif self.mode == "test":
             self.n = 0
+        elif self.mode == "val":
+            self.n = 0
         else:
             return -1
 
@@ -567,6 +581,8 @@ class RDataset(Dataset):
                 entries =  self.train_ds[self.n:self.n + self.batch_size]
             elif self.mode == "test":
                 entries =  self.test_ds[self.n:self.n + self.batch_size]
+            elif self.mode == "val":
+                entries =  self.val_ds[self.n:self.n + self.batch_size]
             else:
                 return -1
 

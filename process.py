@@ -7,15 +7,15 @@ from model import Siamese
 import json
 from random import randrange
 
-def save_data(path, epoch, model, optimizer, scheduler, log_list, dataset):
+def save_data(path, epoch, model, optimizer, scheduler, log_list, dataset, f_score_val_best):
     torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'log_list': log_list,
-            'dataset': dataset
-            
+            'dataset': dataset,
+            'f_score_val_best': f_score_val_best
     }, path)
 
     print(f"Saved run successfully at {path}")
@@ -26,6 +26,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     epoch = data['epoch']
     log_list = data['log_list']
+    f_score_val_best = data['f_score_val_best']
 
     model = Siamese(TRAIN_CONFIG, MODEL_KWARGS).to(device)
     model.load_state_dict(data['model_state_dict'])
@@ -43,7 +44,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
 
     print(f"Loaded run successfully from {path}")
 
-    return epoch, model, optim, scheduler, log_list, ds
+    return epoch, model, optim, scheduler, log_list, ds, f_score_val_best
 
 def add_to_log_list(log_list, loss, accuracy = None):
     if not "loss" in log_list:

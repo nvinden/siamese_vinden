@@ -1,10 +1,9 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "init_41_50",
+        "partition_data_name": "41_50",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
-        "kth_example": 4,
         "initial_random_negatives": 50000,
         "initial_jeremy_negatives": 50000,
         "test_random_negatives": 50000,
@@ -14,7 +13,7 @@
 
     "TRAIN_CONFIG": {
         "lr": 3e-4,
-        "n_epochs": 70,
+        "n_epochs": 300,
         "epoch_reset": false,
         "A_name": "lstm",
         "embedding_type": "one_hot",

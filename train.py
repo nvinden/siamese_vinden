@@ -1,26 +1,35 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 import pandas as pd
+import numpy as np
 
 import time
 import os
 from datetime import datetime
-from pyjarowinkler import distance as jw
 import sys
+import random
 
-from dataset import SiamesePairsDataset, SiameseMasterDataset, EmbeddingsMasterList, RDataset
+from sklearn.metrics import precision_recall_curve
+
+from dataset import RDataset
 from model import Siamese
-from process import save_data, load_data, add_to_log_list, load_json_config, emb2str, contrastive_loss
+from process import save_data, load_data, load_json_config, emb2str, contrastive_loss
 
-def train(save_name):
-    torch.manual_seed(0)
+np.random.seed(41)
+torch.manual_seed(1608)
+random.seed(55)
 
+
+def train_full_k(save_name):
+    for k in range(5):
+        train(save_name, k)
+
+def train(save_name, k):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"CURRENT DEVICE: {device}")
 
-    save_file = os.path.join("saves", str(save_name))
+    save_file = os.path.join("saves", str(save_name) + "_k" + str(k))
     json_file = os.path.join("configs", str(save_name) + ".json")
 
     DATASET_CONFIG, TRAIN_CONFIG, MODEL_KWARGS = load_json_config(json_file)
@@ -33,11 +42,12 @@ def train(save_name):
         scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
         log_list = {}
 
-        ds = RDataset(DATASET_CONFIG)
+        ds = RDataset(DATASET_CONFIG, k)
 
         start_epoch = 0
+        f_score_val_best = 0
     else:
-        start_epoch, model, optim, scheduler, log_list, ds = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
+        start_epoch, model, optim, scheduler, log_list, ds, f_score_val_best = load_data(save_file, TRAIN_CONFIG, MODEL_KWARGS)
     criterion = contrastive_loss
 
     model = model.to(device)
@@ -48,8 +58,10 @@ def train(save_name):
         os.mkdir(result_directory)
     if not os.path.isdir(os.path.join(result_directory, "train")):
         os.mkdir(os.path.join(result_directory, "train"))
-    if not os.path.isdir(os.path.join(result_directory, "test")):
-        os.mkdir(os.path.join(result_directory, "test"))
+    if not os.path.isdir(os.path.join(result_directory, "val")):
+        os.mkdir(os.path.join(result_directory, "val"))
+
+    TRAIN_CONFIG["n_epochs"] = 16
 
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
@@ -60,7 +72,7 @@ def train(save_name):
         total_epoch_loss = 0
         total_pairs = len(ds)
 
-        data_save_condition = (epoch % 5 == 0)
+        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1)# and epoch != 0
 
         if data_save_condition:
             model_dict = dict()
@@ -95,28 +107,40 @@ def train(save_name):
                 name2_list = [emb2str(i) for i in n1]
 
                 for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity, label):
-                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod.item(), "label": lab.item()}
+                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod.item(), "label": lab.item(), "k": k}
                     dict_index += 1
 
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
 
         if data_save_condition:
-            path_train = os.path.join(result_directory, "train", f"epoch{str(epoch).zfill(3)}.csv")
-            path_test = os.path.join(result_directory, "test", f"epoch{str(epoch).zfill(3)}.csv")
+            if not os.path.isdir(os.path.join(result_directory, "train", str(k))):
+                os.mkdir(os.path.join(result_directory, "train", str(k)))
+            if not os.path.isdir(os.path.join(result_directory, "val", str(k))):
+                os.mkdir(os.path.join(result_directory, "val", str(k)))
+
+            path_train = os.path.join(result_directory, "train", str(k), f"epoch{str(epoch).zfill(3)}.csv")
+            path_val = os.path.join(result_directory, "val", str(k), f"epoch{str(epoch).zfill(3)}.csv")
+
+            #SAVING TRAIN CSV
             df = pd.DataFrame.from_dict(model_dict, "index")
             df.to_csv(path_train)
 
             # Run on test set as well
-            accuracy = save_test_list(model, ds, path_test)
+            f_score_val = save_list(model, ds, path_val, k, "val")
+            if f_score_val > f_score_val_best:
+                f_score_val_best = f_score_val
+                best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
+                save_data(best_save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
+                print(f"Saved a new best with f-score")
+            print(f"F-Score: {f_score_val}")
 
-            save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
+            save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
 
         scheduler.step()
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
-
         print(f"\nEpoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
         '''
@@ -149,9 +173,18 @@ def train(save_name):
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
 
+    print(f"Finished training {save_name} on k = {k}")
+
+    #SAVING LIST ON BEST
+    best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
+    _, best_model, _, _, _, _, _  = load_data(best_save_file, TRAIN_CONFIG, MODEL_KWARGS)
+    path_test = os.path.join(result_directory, "test.csv")
+
+    save_list(best_model, ds, path_test, k, "test")
+
     return 0, 0
 
-def save_test_list(model, ds, save_name):
+def save_list(model, ds, save_name, k, set_type : str):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model_dict = dict()
@@ -159,11 +192,9 @@ def save_test_list(model, ds, save_name):
 
     original_mode = ds.mode
     model.eval()
-    criterion = contrastive_loss
 
-    total_accuracy = 0
     with torch.no_grad():
-        ds.mode = "test"
+        ds.mode = set_type
         for batch_no, data in enumerate(ds):
             if len(data) == 0:
                 continue
@@ -180,8 +211,7 @@ def save_test_list(model, ds, save_name):
             n1 = n1.to(device)
             label = label.to(device)
 
-            name_similarity, (v_i, v_j) = model(n0, n1)
-            loss = criterion(v_i, v_j, label)
+            name_similarity, (_, _) = model(n0, n1)
 
             for i in range(len(n0)):
                 name1 = emb2str(n0[i])
@@ -189,19 +219,30 @@ def save_test_list(model, ds, save_name):
                 model_score = name_similarity[i].item()
                 curr_label = label[i].item()
 
-                model_dict[dict_index] = {"name1": name1, "name2": name2, "model_score": model_score, "label": curr_label}
+                model_dict[dict_index] = {"name1": name1, "name2": name2, "model_score": model_score, "label": curr_label, "k": k}
                 dict_index += 1
-
-            total_accuracy += loss.item()
         
     ds.mode = original_mode
         
     df = pd.DataFrame.from_dict(model_dict, "index")
     df.to_csv(save_name)
 
-    total_accuracy /= (batch_no + 1)
+    label = df["label"].to_numpy()
+    model_score = df["model_score"].to_numpy()
 
-    return total_accuracy
+    precision, recall, _ = precision_recall_curve(label, model_score)
+
+    f_score_list = list()
+    for pre, rec in zip(precision, recall):
+      lower = pre + rec
+      if lower == 0.0:
+        lower = 0.00000001
+      
+      f_score_list.append(2 * (pre * rec) / lower)
+
+    f_score = max(f_score_list)
+
+    return f_score
 
 def test_on_test_set(model, ds):
     original_mode = ds.mode
@@ -235,8 +276,24 @@ def test_on_test_set(model, ds):
 
     return total_accuracy
 
-if __name__ == '__main__':
-    config_list = ["step2_41_50_k1", "step2_41_50_k2", "step2_41_50_k3", "step2_41_50_k4"]
+def main():
+    arg = sys.argv
+    if len(arg) != 3:
+        print("Error: Must have 2 command line arguments")
+        return
+    
+    config_file = arg[1]
+    k_number = arg[2]
+
+    try:
+        config_file = str(config_file)
+        k_number = int(k_number)
+
+        if k_number < 0 or k_number > 4:
+            raise Exception
+    except Exception:
+        print("Error: config must be a string, and k must be an integer")
+        return
 
     log_file_name = "log.txt"
     debug = True
@@ -244,20 +301,13 @@ if __name__ == '__main__':
     print("GPU Available: " + str(torch.cuda.is_available()))
 
     with open(log_file_name, "a") as log:
-        for config in config_list:
-            start_time = time.time()
+        start_time = time.time()
 
-            if debug == True:
-                train_loss, test_loss = train(config)
-                text_out = f"{datetime.now()}\n{config}: training complete\nTime: {time.time() - start_time}\nTrain Loss: {train_loss} \
-                        \nTest Loss: {test_loss}"
-            else:
-                try:
-                    train_loss, test_loss = train(config)
-                    text_out = f"{datetime.now()}\n{config}: training complete\nTime: {time.time() - start_time}\nTrain Loss: {train_loss} \
-                            \nTest Loss: {test_loss}"
-                except Exception as e:
-                    text_out = f"{datetime.now()}\n{config}: training failure\n{str(e)}\n"
+        train(config_file, k_number)
+        text_out = f"{datetime.now()}\n{config_file}: training complete\nTime: {time.time() - start_time}"
+        print("\n" + text_out)
+        log.write(text_out + "\n")
 
-            print("\n" + text_out)
-            log.write(text_out + "\n")
+
+if __name__ == '__main__':
+    main()

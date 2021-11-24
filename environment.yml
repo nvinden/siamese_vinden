@@ -1,0 +1,47 @@
+name: jerm
+channels:
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - _openmp_mutex=4.5=1_gnu
+  - bzip2=1.0.8=h7b6447c_0
+  - c-ares=1.17.1=h27cfd23_0
+  - ca-certificates=2021.10.26=h06a4308_2
+  - certifi=2020.6.20=pyhd3eb1b0_3
+  - curl=7.78.0=h1ccaba5_0
+  - expat=2.4.1=h2531618_2
+  - gettext=0.21.0=hf68c758_0
+  - git=2.32.0=pl5262hc120c5b_1
+  - icu=58.2=he6710b0_3
+  - krb5=1.19.2=hac12032_0
+  - ld_impl_linux-64=2.35.1=h7274673_9
+  - libcurl=7.78.0=h0b77cf5_0
+  - libedit=3.1.20210910=h7f8727e_0
+  - libev=4.33=h7f8727e_1
+  - libffi=3.3=he6710b0_2
+  - libgcc-ng=9.3.0=h5101ec6_17
+  - libgomp=9.3.0=h5101ec6_17
+  - libiconv=1.15=h63c8f33_5
+  - libnghttp2=1.46.0=hce63b2e_0
+  - libssh2=1.9.0=h1ba5d50_1
+  - libstdcxx-ng=9.3.0=hd4cf53a_17
+  - libuuid=1.0.3=h7f8727e_2
+  - libxml2=2.9.12=h03d6c58_0
+  - ncurses=6.3=h7f8727e_2
+  - openssl=1.1.1l=h7f8727e_0
+  - pcre2=10.35=h14c3975_1
+  - perl=5.26.2=h14c3975_0
+  - python=3.10.0=h151d27f_3
+  - readline=8.1=h27cfd23_0
+  - sqlite=3.36.0=hc218d9a_0
+  - tk=8.6.11=h1ccaba5_0
+  - tzdata=2021e=hda174b7_0
+  - wheel=0.37.0=pyhd3eb1b0_1
+  - xz=5.2.5=h7b6447c_0
+  - zlib=1.2.11=h7b6447c_3
+  - pip:
+    - annoy==1.17.0
+    - pip==21.2.4
+    - pyjarowinkler==1.8
+    - setuptools==58.0.4
+prefix: /home/nvinden/anaconda3/envs/jerm

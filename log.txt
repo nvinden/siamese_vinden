@@ -111,3 +111,21 @@ pretrained_encoder_phase2_116: training failure
 pretrained_encoder_phase2_116: training failure
 [Errno 2] No such file or directory: 'configs/pretrained_encoder_phase2_116.json'
 
+2021-11-18 13:58:36.824075
+nick_test: training complete
+Time: 938.9113810062408
+2021-11-18 14:06:49.445242
+nick_test: training complete
+Time: 404.87376499176025
+2021-11-22 13:05:15.999460
+11_25: training complete
+Time: 356.6493799686432
+2021-11-23 14:51:47.625920
+11_25: training complete
+Time: 4.394381523132324
+2021-11-23 14:55:03.330560
+11_25: training complete
+Time: 64.456294298172
+2021-11-23 14:57:14.567273
+11_25: training complete
+Time: 104.38865566253662
