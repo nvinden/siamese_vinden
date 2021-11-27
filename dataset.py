@@ -709,16 +709,12 @@ class EmbeddingsMasterList():
 
     def embed_all(self, model):
         self.embeddings = AnnoyIndex(self.dimensions, 'euclidean')
-        '''
         model.eval()
         for i in range(len(self.master_dataset)):
             embedded_name = self.master_dataset[i]['name'].unsqueeze(0)
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
-'''
         self.embeddings.build(self.trees)
-
-        self.embeddings.load("test.ann")
         
         model.train()
 
