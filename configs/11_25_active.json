@@ -1,6 +1,6 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "11_25_active",
+        "partition_data_name": "11_25",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
@@ -20,7 +20,8 @@
         "n_tokens": 30,
         "scheduler_step_size": 3,
         "scheduler_gamma": 1,
-        "active": false
+        "active": true,
+        "hard_neg_cap": 5
     },
 
     "MODEL_KWARGS": {

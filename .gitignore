@@ -7,3 +7,6 @@ __pycache__
 
 saves/*
 results/*
+
+test.ann
+test.csv

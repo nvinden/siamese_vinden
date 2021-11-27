@@ -42,7 +42,7 @@ def train(save_name, k):
         scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=TRAIN_CONFIG["scheduler_step_size"], gamma=TRAIN_CONFIG["scheduler_gamma"])
         log_list = {}
 
-        ds = RDataset(DATASET_CONFIG, k)
+        ds = RDataset(DATASET_CONFIG, TRAIN_CONFIG, k, dimensions = MODEL_KWARGS['hidden_size'])
 
         start_epoch = 0
         f_score_val_best = 0
@@ -71,7 +71,7 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-
+        
         if data_save_condition:
             model_dict = dict()
             dict_index = 0

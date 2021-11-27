@@ -168,7 +168,7 @@ class PretrainDataset(Dataset):
         return {"name": name}
 
 class RDataset(Dataset):
-    def __init__(self, config, k, reprocess : bool = False):
+    def __init__(self, config, train_config, k, dimensions, reprocess : bool = False):
         self.partition_data_name = config["partition_data_name"] + ".json"
         self.k = config["k"]
         self.kth = k
@@ -178,15 +178,10 @@ class RDataset(Dataset):
         self.test_jeremy_negatives = config['test_jeremy_negatives']
         self.batch_size = config["batch_size"]
 
-        if "hard_neg_bandwith" in config:
-            self.hard_neg_bandwith = config["hard_neg_bandwith"]
+        if "hard_neg_cap" in train_config:
+            self.hard_neg_cap = train_config["hard_neg_cap"]
         else:
-            self.hard_neg_bandwith = None
-
-        if "embedding_bandwith" in config:
-            self.embedding_bandwith = config["embedding_bandwith"]
-        else:
-            self.embedding_bandwith = None
+            self.hard_neg_cap = None
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -225,7 +220,7 @@ class RDataset(Dataset):
         self.initialize(reprocess)
         self.create_train_test_sets()
 
-        self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset, embedding_bandwith = self.embedding_bandwith)
+        self.embeddings = EmbeddingsMasterList(self.pair_dataset, self.master_dataset, dimensions = dimensions)
         self.emb_idx = 0
 
     def create_train_test_sets(self):
@@ -604,7 +599,21 @@ class RDataset(Dataset):
         else:
             raise StopIteration
 
-    def add_to_dataset(self):
+    def _remove_used_from_training_set(self):
+        new_list = list()
+        for i, entry in enumerate(self.train_ds):
+            if entry['label'] == 1.0:
+                new_list.append(entry)
+
+            name1 = emb2str(entry['emb0'])
+            name2 = emb2str(entry["emb1"])
+
+            if self.already_used(name1, name2):
+                new_list.append(entry)
+
+        self.train_ds = new_list
+
+    def add_to_dataset(self, model):
         if self.mode == "train":
             ds = self.train_ds
         elif self.mode == "test":
@@ -612,55 +621,61 @@ class RDataset(Dataset):
         else:
             return -1
 
+        #self._remove_used_from_training_set()
+
         n_added = 0
         n_pairs_found = 0
         n_already_used = 0
 
-        n_iterations = 0
-
         index2name = self.embeddings.index2name
         name2index = self.embeddings.name2index
-        pair_dict = self.pair_dict.item()
-        pair_dict_keys = list(pair_dict)
 
         table = self.master_dataset.table
 
-        while self.emb_idx < len(table):
-            name = table[self.emb_idx]
-            name = emb2str(name)
+        hard_neg_list = pd.DataFrame(columns = ["name0", "name1", "score"])
+
+        for i, name_emb in enumerate(table):
+            if i == 10:
+                break
+            name = emb2str(name_emb)
 
             name_idx = name2index[name]
 
             nn_idx = self.embeddings.get_nn(name_idx)
             nn_name = index2name[nn_idx]
+            nn_name_emb = str2emb(nn_name)
 
             if not self.are_pairs(name, nn_name):
                 if not self.already_used(name, nn_name):
-                    ds.append({"emb0": str2emb(name), "emb1": str2emb(nn_name), "label": 0.0})
-                    self.add_to_used(name, nn_name)
+                    score = self.embeddings.get_distance(i, nn_idx)
+                    hard_neg_list = hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score}, ignore_index = True)
                     n_added += 1
                 else:
                     n_already_used += 1
             else:
                 n_pairs_found += 1
 
-            if self.emb_idx == len(table) - 1:
-                self.emb_idx = 0
+            if i % 5000 == 0:
+                print(i)
 
-            n_iterations += 1
-            self.emb_idx += 1
+        hard_neg_list = hard_neg_list.sort_values(by=['score'], ascending = True, ignore_index = True)
 
-            if n_iterations == len(table) or (self.hard_neg_bandwith is not None and n_added >= self.hard_neg_bandwith):
-                break
+        if self.hard_neg_cap is not None:
+            print(len(hard_neg_list))
+            hard_neg_list = hard_neg_list.head(self.hard_neg_cap)
+            print(len(hard_neg_list))
+        
+        hard_neg_list = hard_neg_list.to_dict('records')
+        self.train_ds = self.train_ds + hard_neg_list
+
+        random.shuffle(self.train_ds)
 
         return n_added, n_pairs_found, n_already_used
 
 class EmbeddingsMasterList():
-    def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50, embedding_bandwith = None):
+    def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50):
         self.pair_dataset = pair_dataset
         self.master_dataset = master_dataset
-
-        self.embedding_bandwith = embedding_bandwith
 
         self.trees = trees
         self.dimensions = dimensions
@@ -689,6 +704,9 @@ class EmbeddingsMasterList():
 
     def get_nn(self, index, number = 1):
         return self.embeddings.get_nns_by_item(index, number + 1)[1]
+    
+    def get_distance(self, i, j):
+        return self.embeddings.get_distance(i, j)
 
     def _build_dict(self):
         index = 0
@@ -700,7 +718,7 @@ class EmbeddingsMasterList():
             index += 1
 
         index2name = {v: k for k, v in name2index.items()}
-
+        #/home/nvinden/projects/def-lantonie/jfoxcrof
         np.save("data/index2name.npy", index2name) 
         np.save("data/name2index.npy", name2index)
 
