@@ -169,6 +169,8 @@ class PretrainDataset(Dataset):
 
 class RDataset(Dataset):
     def __init__(self, config, train_config, k, dimensions, reprocess : bool = False):
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.partition_data_name = config["partition_data_name"] + ".json"
         self.k = config["k"]
         self.kth = k
@@ -183,7 +185,10 @@ class RDataset(Dataset):
         else:
             self.hard_neg_cap = None
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        if "hard_neg_search_cap" in train_config:
+            self.hard_neg_search_cap = train_config["hard_neg_cap"]
+        else:
+            self.hard_neg_search_cap = None
 
         data_root = config["data_root"]
         self.data_root = data_root
@@ -621,7 +626,7 @@ class RDataset(Dataset):
         else:
             return -1
 
-        #self._remove_used_from_training_set()
+        self._remove_used_from_training_set()
 
         n_added = 0
         n_pairs_found = 0
@@ -634,9 +639,14 @@ class RDataset(Dataset):
 
         hard_neg_list = pd.DataFrame(columns = ["name0", "name1", "score"])
 
-        for i, name_emb in enumerate(table):
-            if i == 10:
-                break
+        if self.hard_neg_search_cap is not None:
+            max_iterations = self.self.hard_neg_search_cap
+        else:
+            max_iterations = len(table)
+
+        count = 0
+        while True:
+            name_emb = table[self.emb_idx]
             name = emb2str(name_emb)
 
             name_idx = name2index[name]
@@ -647,7 +657,7 @@ class RDataset(Dataset):
 
             if not self.are_pairs(name, nn_name):
                 if not self.already_used(name, nn_name):
-                    score = self.embeddings.get_distance(i, nn_idx)
+                    score = self.embeddings.get_distance(self.emb_idx, nn_idx)
                     hard_neg_list = hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score}, ignore_index = True)
                     n_added += 1
                 else:
@@ -655,16 +665,25 @@ class RDataset(Dataset):
             else:
                 n_pairs_found += 1
 
-            if i % 5000 == 0:
-                print(i)
+            self.emb_idx += 1
+
+            if self.emb_idx % 5000:
+                print(self.emb_idx)
+
+            if self.emb_idx >= len(self.table):
+                self.emb_idx = 0
+
+            count += 1
+
+            if count >= max_iterations:
+                break
+
 
         hard_neg_list = hard_neg_list.sort_values(by=['score'], ascending = True, ignore_index = True)
 
-        if self.hard_neg_cap is not None:
-            print(len(hard_neg_list))
+        if self.hard_neg_cap is not None and self.hard_neg_cap > len(hard_neg_list):
             hard_neg_list = hard_neg_list.head(self.hard_neg_cap)
-            print(len(hard_neg_list))
-        
+
         hard_neg_list = hard_neg_list.to_dict('records')
         self.train_ds = self.train_ds + hard_neg_list
 

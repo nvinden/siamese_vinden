@@ -70,8 +70,8 @@ def train(save_name, k):
         total_epoch_loss = 0
         total_pairs = len(ds)
 
-        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        embedding_condition = ((epoch % 10 == 0)) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] and TRAIN_CONFIG['active'] == True
+        data_save_condition = ((epoch + 1 % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
+        embedding_condition = (epoch + 1 % 10 == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
             model_dict = dict()
@@ -112,6 +112,8 @@ def train(save_name, k):
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
 
+        print(f"Epoch {epoch + 1}:")
+
         if data_save_condition:
             if not os.path.isdir(os.path.join(result_directory, "train", str(k))):
                 os.mkdir(os.path.join(result_directory, "train", str(k)))
@@ -140,7 +142,6 @@ def train(save_name, k):
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
-        print(f"Epoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
 
         if embedding_condition:
@@ -149,7 +150,7 @@ def train(save_name, k):
             print("Embedding done...")
 
             print("Adding to dataset...")
-            n_added, pairs_found, already_found = ds.add_to_dataset()
+            n_added, pairs_found, already_found = ds.add_to_dataset(model)
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
 
