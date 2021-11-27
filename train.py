@@ -71,7 +71,8 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        
+        embedding_condition = ((epoch % 10 == 0)) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"]
+
         if data_save_condition:
             model_dict = dict()
             dict_index = 0
@@ -141,23 +142,8 @@ def train(save_name, k):
         total_epoch_loss /= (batch_no + 1)
         print(f"Epoch {epoch + 1}:")
         print(f"          Loss: {total_epoch_loss}")
-        '''
-        if (epoch + 1) % 10 == 0:
-            save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds)
-            accuracy = save_test_list(model, ds, save_name)
-            add_to_log_list(log_list, total_epoch_loss, accuracy)
-            print(f"          Test: {accuracy}")
 
-            ds.mode = "train"
-
-            ds.shuffle_ds()
-        else:
-            add_to_log_list(log_list, total_epoch_loss)
-            ds.shuffle_ds()
-        '''
-
-        '''
-        if (epoch + 1) % 3 == 0:
+        if embedding_condition:
             print("Embedding...")
             ds.embeddings.embed_all(model)
             print("Embedding done...")
@@ -166,7 +152,7 @@ def train(save_name, k):
             n_added, pairs_found, already_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
-        '''
+
 
         print(f"trained on {total_pairs} pairs")
         print(f" TIME: {time.time() - start_time} seconds")
