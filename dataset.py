@@ -680,7 +680,7 @@ class RDataset(Dataset):
 
         hard_neg_list = hard_neg_list.sort_values(by=['score'], ascending = True, ignore_index = True)
 
-        if self.hard_neg_cap is not None and self.hard_neg_cap > len(hard_neg_list):
+        if self.hard_neg_cap is not None and self.hard_neg_cap < len(hard_neg_list):
             hard_neg_list = hard_neg_list.head(self.hard_neg_cap)
 
         hard_neg_list = hard_neg_list.to_dict('records')
