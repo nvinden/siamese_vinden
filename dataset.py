@@ -667,17 +667,16 @@ class RDataset(Dataset):
 
             self.emb_idx += 1
 
-            if self.emb_idx % 5000:
+            if self.emb_idx % 5000 == 0:
                 print(self.emb_idx)
 
-            if self.emb_idx >= len(self.table):
+            if self.emb_idx >= len(table):
                 self.emb_idx = 0
 
             count += 1
 
             if count >= max_iterations:
                 break
-
 
         hard_neg_list = hard_neg_list.sort_values(by=['score'], ascending = True, ignore_index = True)
 
@@ -710,14 +709,16 @@ class EmbeddingsMasterList():
 
     def embed_all(self, model):
         self.embeddings = AnnoyIndex(self.dimensions, 'euclidean')
+        '''
         model.eval()
         for i in range(len(self.master_dataset)):
             embedded_name = self.master_dataset[i]['name'].unsqueeze(0)
-            str_name = emb2str(embedded_name.squeeze(0))
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
-
+'''
         self.embeddings.build(self.trees)
+
+        self.embeddings.load("test.ann")
         
         model.train()
 
