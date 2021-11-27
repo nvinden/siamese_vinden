@@ -640,7 +640,7 @@ class RDataset(Dataset):
         hard_neg_list = pd.DataFrame(columns = ["name0", "name1", "score"])
 
         if self.hard_neg_search_cap is not None:
-            max_iterations = self.self.hard_neg_search_cap
+            max_iterations = self.hard_neg_search_cap
         else:
             max_iterations = len(table)
 
