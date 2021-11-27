@@ -71,7 +71,7 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch + 1 % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        embedding_condition = (epoch + 1 % 10 == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] and TRAIN_CONFIG['active'] == True
+        embedding_condition = (epoch + 1 % 10 == 0) and epoch != TRAIN_CONFIG["n_epochs"] and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
             model_dict = dict()
