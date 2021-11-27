@@ -667,9 +667,6 @@ class RDataset(Dataset):
 
             self.emb_idx += 1
 
-            if self.emb_idx % 5000 == 0:
-                print(self.emb_idx)
-
             if self.emb_idx >= len(table):
                 self.emb_idx = 0
 
@@ -684,7 +681,8 @@ class RDataset(Dataset):
             hard_neg_list = hard_neg_list.head(self.hard_neg_cap)
 
         hard_neg_list = hard_neg_list.to_dict('records')
-        self.train_ds = self.train_ds + hard_neg_list
+        for rec in hard_neg_list:
+            self.train_ds.append({"name0": rec["name0"], "name1": rec["name1"], "label": 0.0})
 
         random.shuffle(self.train_ds)
 
