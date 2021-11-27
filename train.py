@@ -71,7 +71,7 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        embedding_condition = ((epoch % 10 == 0)) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"]
+        embedding_condition = ((epoch % 10 == 0)) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
             model_dict = dict()
@@ -155,7 +155,8 @@ def train(save_name, k):
 
 
         print(f"trained on {total_pairs} pairs")
-        print(f" TIME: {time.time() - start_time} seconds")
+        print(f" TIME: {time.time() - start_time} seconds\n")
+
 
     print(f"Finished training {save_name} on k = {k}")
 
