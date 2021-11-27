@@ -186,7 +186,7 @@ class RDataset(Dataset):
             self.hard_neg_cap = None
 
         if "hard_neg_search_cap" in train_config:
-            self.hard_neg_search_cap = train_config["hard_neg_cap"]
+            self.hard_neg_search_cap = train_config["hard_neg_search_cap"]
         else:
             self.hard_neg_search_cap = None
 
