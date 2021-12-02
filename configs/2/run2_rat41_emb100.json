@@ -6,8 +6,8 @@
         "k": 5,
         "initial_random_negatives": 50000,
         "initial_jeremy_negatives": 50000,
-        "test_random_negatives": 50000,
-        "test_jeremy_negatives": 50000,
+        "test_random_negatives": 12500,
+        "test_jeremy_negatives": 12500,
         "batch_size": 32,
         "random_mutability": 0.0,
         "jeremy_mutability": 0.0

@@ -61,8 +61,6 @@ def train(save_name, k):
     if not os.path.isdir(os.path.join(result_directory, "val")):
         os.mkdir(os.path.join(result_directory, "val"))
 
-    TRAIN_CONFIG["n_epochs"] = 23
-
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()

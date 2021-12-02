@@ -43,8 +43,8 @@ for hyp_combination in itertools.product(*hyperparam_list):
         DATASET["initial_random_negatives"] = int(1.0 * n_pos)
         DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos)
 
-        DATASET["test_random_negatives"] = int(1.0 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.0 * n_pos)
+        DATASET["test_random_negatives"] = int(0.5 * n_pos)
+        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
 
         TRAIN["active"] = False
         TRAIN["hard_neg_cap"] = int(0.0 * n_pos)
@@ -64,9 +64,9 @@ for hyp_combination in itertools.product(*hyperparam_list):
     elif run == "3":
         DATASET["initial_random_negatives"] = int(0.5 * n_pos)
         DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos)
-        
+
         DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.0 * n_pos)
+        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
 
         TRAIN["active"] = True
         TRAIN["hard_neg_cap"] = int(0.5 * n_pos)
@@ -98,20 +98,14 @@ for hyp_combination in itertools.product(*hyperparam_list):
     if ratio == "11":
         DATASET["initial_random_negatives"] *= 1
         DATASET["initial_jeremy_negatives"] *= 1
-        DATASET["test_random_negatives"] *= 1
-        DATASET["test_jeremy_negatives"] *= 1
         TRAIN["hard_neg_cap"] *= 1
     elif ratio == "21":
         DATASET["initial_random_negatives"] *= 2
         DATASET["initial_jeremy_negatives"] *= 2
-        DATASET["test_random_negatives"] *= 2
-        DATASET["test_jeremy_negatives"] *= 2
         TRAIN["hard_neg_cap"] *= 2
     elif ratio == "41":
         DATASET["initial_random_negatives"] *= 4
         DATASET["initial_jeremy_negatives"] *= 4
-        DATASET["test_random_negatives"] *= 4
-        DATASET["test_jeremy_negatives"] *= 4
         TRAIN["hard_neg_cap"] *= 4
 
     out = {"DATASET_CONFIG": DATASET, "TRAIN_CONFIG": TRAIN, "MODEL_KWARGS": MODEL}
