@@ -63,6 +63,7 @@ def train(save_name, k):
 
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
+        ds.mode = "train"
         model.train()
         model.requires_grad_()
         start_time = time.time()
@@ -77,7 +78,6 @@ def train(save_name, k):
             model_dict = dict()
             dict_index = 0
 
-        ds.mode = "train"
         for batch_no, data in enumerate(ds):
             #OPTIMIZING ON PAIR
             optim.zero_grad()

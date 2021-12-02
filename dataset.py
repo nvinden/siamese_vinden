@@ -262,7 +262,7 @@ class RDataset(Dataset):
         for i, row in enumerate(ini["jeremy"][val_kth]):
             if i >= self.test_jeremy_negatives:
                 break
-            m = 0 if i / self.test_jeremy_negatives >= self.random_mutability else 1
+            m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
             self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
 
         #creating train set
@@ -274,14 +274,16 @@ class RDataset(Dataset):
             for i, row in enumerate(ini["positives"][k_no]):
                 self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
             for i, row in enumerate(ini["random"][k_no]):
+                shortest = min(len(ini["random"][k_no]), self.initial_random_negatives)
                 if i >= self.initial_random_negatives:
                     break
-                m = 0 if i / self.initial_random_negatives >= self.random_mutability else 1
+                m = 0 if i / shortest >= self.random_mutability else 1
                 self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
             for i, row in enumerate(ini["jeremy"][k_no]):
+                shortest = min(len(ini["jeremy"][k_no]), self.initial_jeremy_negatives)
                 if i >= self.initial_jeremy_negatives:
                     break
-                m = 0 if i / self.initial_jeremy_negatives >= self.jeremy_mutability else 1
+                m = 0 if i / shortest >= self.jeremy_mutability else 1
                 self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
 
         random.shuffle(self.test_ds)
