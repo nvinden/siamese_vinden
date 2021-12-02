@@ -1,20 +1,19 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "11_25",
+        "partition_data_name": "run4_rat21_emb25",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
-        "initial_random_negatives": 12500,
-        "initial_jeremy_negatives": 12500,
-        "test_random_negatives": 12500,
-        "test_jeremy_negatives": 12500,
+        "initial_random_negatives": 25000,
+        "initial_jeremy_negatives": 25000,
+        "test_random_negatives": 25000,
+        "test_jeremy_negatives": 25000,
         "batch_size": 32,
-        "random_mutability": 0.0,
-        "jeremy_mutability": 1.1
+        "random_mutability": 0.5,
+        "jeremy_mutability": 0.5
     },
-
     "TRAIN_CONFIG": {
-        "lr": 3e-4,
+        "lr": 0.0003,
         "n_epochs": 300,
         "epoch_reset": false,
         "A_name": "lstm",
@@ -23,9 +22,8 @@
         "scheduler_step_size": 3,
         "scheduler_gamma": 1,
         "active": true,
-        "hard_neg_cap": 7500
+        "hard_neg_cap": 25000
     },
-
     "MODEL_KWARGS": {
         "input_size": 26,
         "hidden_size": 25,

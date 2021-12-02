@@ -1,6 +1,6 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "11_25",
+        "partition_data_name": "run5_rat11_emb25",
         "data_root": "data/",
         "string_pad": 30,
         "k": 5,
@@ -12,9 +12,8 @@
         "random_mutability": 0.0,
         "jeremy_mutability": 1.1
     },
-
     "TRAIN_CONFIG": {
-        "lr": 3e-4,
+        "lr": 0.0003,
         "n_epochs": 300,
         "epoch_reset": false,
         "A_name": "lstm",
@@ -23,9 +22,8 @@
         "scheduler_step_size": 3,
         "scheduler_gamma": 1,
         "active": true,
-        "hard_neg_cap": 7500
+        "hard_neg_cap": 12500
     },
-
     "MODEL_KWARGS": {
         "input_size": 26,
         "hidden_size": 25,

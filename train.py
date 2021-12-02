@@ -61,6 +61,8 @@ def train(save_name, k):
     if not os.path.isdir(os.path.join(result_directory, "val")):
         os.mkdir(os.path.join(result_directory, "val"))
 
+    TRAIN_CONFIG["n_epochs"] = 23
+
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         model.train()
@@ -71,7 +73,7 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        embedding_condition = (epoch % 10 == 0) and epoch != TRAIN_CONFIG["n_epochs"] - 1 and TRAIN_CONFIG['active'] == True
+        embedding_condition = (epoch % 10 == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] - 1 and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
             model_dict = dict()
@@ -150,7 +152,7 @@ def train(save_name, k):
             print("Embedding done...")
 
             print("Adding to dataset...")
-            n_added, pairs_found, already_found = ds.add_to_dataset(model)
+            n_added, pairs_found, already_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
             print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
 

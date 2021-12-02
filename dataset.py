@@ -180,6 +180,9 @@ class RDataset(Dataset):
         self.test_jeremy_negatives = config['test_jeremy_negatives']
         self.batch_size = config["batch_size"]
 
+        self.random_mutability = config['random_mutability']
+        self.jeremy_mutability = config['jeremy_mutability']
+
         if "hard_neg_cap" in train_config:
             self.hard_neg_cap = train_config["hard_neg_cap"]
         else:
@@ -235,28 +238,32 @@ class RDataset(Dataset):
 
         #creating test set
         self.test_ds = list()
-        for row in ini["positives"][kth]:
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+        for i, row in enumerate(ini["positives"][kth]):
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
         for i, row in enumerate(ini["random"][kth]):
             if i >= self.test_random_negatives:
                 break
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+            m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
         for i, row in enumerate(ini["jeremy"][kth]):
             if i >= self.test_jeremy_negatives:
                 break
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
+            m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
 
         self.val_ds = list()        
-        for row in ini["positives"][val_kth]:
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+        for i, row in enumerate(ini["positives"][val_kth]):
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
         for i, row in enumerate(ini["random"][val_kth]):
             if i >= self.test_random_negatives:
                 break
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+            m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
         for i, row in enumerate(ini["jeremy"][val_kth]):
             if i >= self.test_jeremy_negatives:
                 break
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
+            m = 0 if i / self.test_jeremy_negatives >= self.random_mutability else 1
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
 
         #creating train set
         self.train_ds = list()
@@ -264,19 +271,22 @@ class RDataset(Dataset):
             if k_no == kth or k_no == val_kth:
                 continue
 
-            for row in ini["positives"][k_no]:
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0})
+            for i, row in enumerate(ini["positives"][k_no]):
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
             for i, row in enumerate(ini["random"][k_no]):
                 if i >= self.initial_random_negatives:
                     break
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0})
+                m = 0 if i / self.initial_random_negatives >= self.random_mutability else 1
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
             for i, row in enumerate(ini["jeremy"][k_no]):
                 if i >= self.initial_jeremy_negatives:
                     break
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0}) 
+                m = 0 if i / self.initial_jeremy_negatives >= self.jeremy_mutability else 1
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
 
         random.shuffle(self.test_ds)
         random.shuffle(self.train_ds)
+        random.shuffle(self.val_ds)
 
         #self.pairs_in_test_set = self._create_pairs_in_test_set(ini["positives"][k_no])
     
@@ -300,8 +310,15 @@ class RDataset(Dataset):
             random_k_length = len(self.partitions["random"]) // self.k
             jeremy_k_length = len(self.partitions["jeremy"]) // self.k
 
-            self.partitions["random"] = [self.partitions["random"][i:i + random_k_length] for i in range(0, len(self.partitions["random"]), random_k_length)]
-            self.partitions["jeremy"] = [self.partitions["jeremy"][i:i + jeremy_k_length] for i in range(0, len(self.partitions["jeremy"]), jeremy_k_length)]
+            if random_k_length != 0:
+                self.partitions["random"] = [self.partitions["random"][i:i + random_k_length] for i in range(0, len(self.partitions["random"]), random_k_length)]
+            else:
+                self.partitions["random"] = [[] for i in range(5)]
+
+            if jeremy_k_length != 0:
+                self.partitions["jeremy"] = [self.partitions["jeremy"][i:i + jeremy_k_length] for i in range(0, len(self.partitions["jeremy"]), jeremy_k_length)]
+            else:
+                self.partitions["jeremy"] = [[] for i in range(5)]
 
             self.save_ds()
         else:
@@ -604,29 +621,16 @@ class RDataset(Dataset):
         else:
             raise StopIteration
 
-    def _remove_used_from_training_set(self):
+    def _remove_mutable(self):
         new_list = list()
-        for i, entry in enumerate(self.train_ds):
-            if entry['label'] == 1.0:
-                new_list.append(entry)
-
-            name1 = emb2str(entry['emb0'])
-            name2 = emb2str(entry["emb1"])
-
-            if self.already_used(name1, name2):
+        for entry in self.train_ds:
+            if entry['mutable'] == 0:
                 new_list.append(entry)
 
         self.train_ds = new_list
 
-    def add_to_dataset(self, model):
-        if self.mode == "train":
-            ds = self.train_ds
-        elif self.mode == "test":
-            ds = self.test_ds
-        else:
-            return -1
-
-        self._remove_used_from_training_set()
+    def add_to_dataset(self):
+        self._remove_mutable()
 
         n_added = 0
         n_pairs_found = 0
@@ -637,7 +641,7 @@ class RDataset(Dataset):
 
         table = self.master_dataset.table
 
-        hard_neg_list = pd.DataFrame(columns = ["name0", "name1", "score"])
+        hard_neg_list = list()
 
         if self.hard_neg_search_cap is not None:
             max_iterations = self.hard_neg_search_cap
@@ -658,7 +662,7 @@ class RDataset(Dataset):
             if not self.are_pairs(name, nn_name):
                 if not self.already_used(name, nn_name):
                     score = self.embeddings.get_distance(self.emb_idx, nn_idx)
-                    hard_neg_list = hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score}, ignore_index = True)
+                    hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score})
                     n_added += 1
                 else:
                     n_already_used += 1
@@ -675,6 +679,7 @@ class RDataset(Dataset):
             if count >= max_iterations:
                 break
 
+        hard_neg_list = pd.DataFrame(hard_neg_list)
         hard_neg_list = hard_neg_list.sort_values(by=['score'], ascending = True, ignore_index = True)
 
         if self.hard_neg_cap is not None and self.hard_neg_cap < len(hard_neg_list):
@@ -682,7 +687,7 @@ class RDataset(Dataset):
 
         hard_neg_list = hard_neg_list.to_dict('records')
         for rec in hard_neg_list:
-            self.train_ds.append({"name0": rec["name0"], "name1": rec["name1"], "label": 0.0})
+            self.train_ds.append({"emb0": rec["name0"].type(torch.int64), "emb1": rec["name1"].type(torch.int64), "label": 0.0, "mutable": 1})
 
         random.shuffle(self.train_ds)
 
@@ -713,6 +718,8 @@ class EmbeddingsMasterList():
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
         self.embeddings.build(self.trees)
+
+        #self.embeddings.load("test.ann")
         
         model.train()
 
