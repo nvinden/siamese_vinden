@@ -80,7 +80,7 @@ for hyp_combination in itertools.product(*hyperparam_list):
         DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
 
         TRAIN["active"] = True
-        TRAIN["hard_neg_cap"] = int(0.6 * 1.0 * n_pos)
+        TRAIN["hard_neg_cap"] = int(0.6 * 0.5 * n_pos)
         DATASET['random_mutability'] = 0.5
         DATASET['jeremy_mutability'] = 0.5    
     elif run == "5":
