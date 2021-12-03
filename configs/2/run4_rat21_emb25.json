@@ -22,7 +22,7 @@
         "scheduler_step_size": 3,
         "scheduler_gamma": 1,
         "active": true,
-        "hard_neg_cap": 30000
+        "hard_neg_cap": 15000
     },
     "MODEL_KWARGS": {
         "input_size": 26,
