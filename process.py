@@ -18,7 +18,7 @@ def save_data(path, epoch, model, optimizer, scheduler, log_list, dataset, f_sco
             'f_score_val_best': f_score_val_best
     }, path)
 
-    print(f"Saved run successfully at {path}")
+    print(f"Saved run successfully at {path}", flush = True)
 
 def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -42,7 +42,7 @@ def load_data(path, TRAIN_CONFIG, MODEL_KWARGS):
     else:
         scheduler = None
 
-    print(f"Loaded run successfully from {path}")
+    print(f"Loaded run successfully from {path}", flush = True)
 
     return epoch, model, optim, scheduler, log_list, ds, f_score_val_best
 
@@ -100,11 +100,11 @@ def create_pretrained_vectors(model, embeddings):
     return embeddings_in, embeddings_truth, replace_list
 
 def print_log_list_diagnostics(log_list):
-    print("losses: pair, master, average")
+    print("losses: pair, master, average", flush = True)
     for i, (p, m, a) in enumerate(zip(log_list['pair_loss'], log_list['master_loss'], log_list['avg_loss'])):
         print(i + 1, "{:.5f}".format(p.item()), "{:.5f}".format(m.item()), "{:.5f}".format(a.item()))
 
-    print("accuracy: pair, master, average")
+    print("accuracy: pair, master, average", flush = True)
     for i, (p, m, a) in enumerate(zip(log_list['pair_test'], log_list['master_test'], log_list['avg_test'])):
         print(i + 1, "{:.5f}".format(p.item()), "{:.5f}".format(m.item()), "{:.5f}".format(a.item()))
 

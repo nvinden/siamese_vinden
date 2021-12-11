@@ -239,31 +239,31 @@ class RDataset(Dataset):
         #creating test set
         self.test_ds = list()
         for i, row in enumerate(ini["positives"][kth]):
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0, "type": 0})
         for i, row in enumerate(ini["random"][kth]):
             if i >= self.test_random_negatives:
                 break
             m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 1})
         for i, row in enumerate(ini["jeremy"][kth]):
             if i >= self.test_jeremy_negatives:
                 break
             m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
-            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
+            self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2}) 
 
         self.val_ds = list()        
         for i, row in enumerate(ini["positives"][val_kth]):
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0, "type": 0})
         for i, row in enumerate(ini["random"][val_kth]):
             if i >= self.test_random_negatives:
                 break
             m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 1})
         for i, row in enumerate(ini["jeremy"][val_kth]):
             if i >= self.test_jeremy_negatives:
                 break
             m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
+            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2}) 
 
         #creating train set
         self.train_ds = list()
@@ -272,19 +272,19 @@ class RDataset(Dataset):
                 continue
 
             for i, row in enumerate(ini["positives"][k_no]):
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0})
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0, "type": 0})
             for i, row in enumerate(ini["random"][k_no]):
                 shortest = min(len(ini["random"][k_no]), self.initial_random_negatives)
                 if i >= self.initial_random_negatives:
                     break
                 m = 0 if i / shortest >= self.random_mutability else 1
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m})
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 1})
             for i, row in enumerate(ini["jeremy"][k_no]):
                 shortest = min(len(ini["jeremy"][k_no]), self.initial_jeremy_negatives)
                 if i >= self.initial_jeremy_negatives:
                     break
                 m = 0 if i / shortest >= self.jeremy_mutability else 1
-                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m}) 
+                self.train_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2}) 
 
         random.shuffle(self.test_ds)
         random.shuffle(self.train_ds)
@@ -306,8 +306,13 @@ class RDataset(Dataset):
     def initialize(self, filename, reprocess : bool = False):
         save_file = os.path.join(self.data_root, self.partition_data_name)
         if not os.path.isfile(save_file) or reprocess:
-            self.partitions["random"] = self.get_random_list(self.initial_random_negatives if self.initial_random_negatives > self.test_random_negatives else self.test_random_negatives)
-            self.partitions["jeremy"] = self.get_jeremy_list(self.initial_jeremy_negatives if self.initial_jeremy_negatives > self.test_jeremy_negatives else self.test_jeremy_negatives)
+            total_random_grab = self.initial_random_negatives if self.initial_random_negatives > self.test_random_negatives else self.test_random_negatives
+            total_random_grab *= 5
+            total_jeremy_grab = self.initial_jeremy_negatives if self.initial_jeremy_negatives > self.test_jeremy_negatives else self.test_jeremy_negatives
+            total_jeremy_grab *= 5
+
+            self.partitions["random"] = self.get_random_list(total_random_grab)
+            self.partitions["jeremy"] = self.get_jeremy_list(total_jeremy_grab)
 
             random_k_length = len(self.partitions["random"]) // self.k
             jeremy_k_length = len(self.partitions["jeremy"]) // self.k
@@ -605,8 +610,6 @@ class RDataset(Dataset):
             else:
                 return -1
 
-            #print(len(self.train_ds))
-
             self.n += self.batch_size
             entries_concat = dict()
             for row in entries:
@@ -633,7 +636,7 @@ class RDataset(Dataset):
 
     def add_to_dataset(self):
         self._remove_mutable()
-
+        
         n_added = 0
         n_pairs_found = 0
         n_already_used = 0
@@ -664,7 +667,7 @@ class RDataset(Dataset):
             if not self.are_pairs(name, nn_name):
                 if not self.already_used(name, nn_name):
                     score = self.embeddings.get_distance(self.emb_idx, nn_idx)
-                    hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score})
+                    hard_neg_list.append({"name0": name_emb, "name1": nn_name_emb, "score": score, "type": 3})
                     n_added += 1
                 else:
                     n_already_used += 1
@@ -689,11 +692,34 @@ class RDataset(Dataset):
 
         hard_neg_list = hard_neg_list.to_dict('records')
         for rec in hard_neg_list:
-            self.train_ds.append({"emb0": rec["name0"].type(torch.int64), "emb1": rec["name1"].type(torch.int64), "label": 0.0, "mutable": 1})
+            self.train_ds.append({"emb0": rec["name0"].type(torch.int64), "emb1": rec["name1"].type(torch.int64), "label": 0.0, "mutable": 1, "type": 3})
 
         random.shuffle(self.train_ds)
 
         return n_added, n_pairs_found, n_already_used
+
+    def get_types_in_train_set(self):
+        out_str = ""
+
+        sets_list = [self.train_ds, self.val_ds, self.test_ds]
+        sets_name = ["Train", "  Val", " Test"]
+        
+        for ttv_set, ttv_name in zip(sets_list, sets_name):
+            types_list = [0] * 5
+
+            for entry in ttv_set:
+                if "type" in entry:
+                    types_list[entry["type"]] += 1
+                else:
+                    types_list[4] += 1
+
+            out_str += f"{ttv_name} -> Positives: {types_list[0]}, Random: {types_list[1]}, Jeremy: {types_list[2]}, Hard: {types_list[3]}, Uninitialized: {types_list[4]}, Total: {sum(types_list)}"
+
+            if ttv_name != " Test":
+                out_str += "\n"
+
+        return out_str
+
 
 class EmbeddingsMasterList():
     def __init__(self, pair_dataset, master_dataset, trees = 40, dimensions = 50):
@@ -719,6 +745,7 @@ class EmbeddingsMasterList():
             embedded_name = self.master_dataset[i]['name'].unsqueeze(0)
             v = model(embedded_name).squeeze(0)
             self.embeddings.add_item(i, v)
+
         self.embeddings.build(self.trees)
 
         #self.embeddings.load("test.ann")

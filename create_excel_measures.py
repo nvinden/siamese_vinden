@@ -9,7 +9,7 @@ import pandas as pd
 
 import os
 
-path_to = "/home/nvinden/work/siamese/results/sharc_results/session1/results"
+path_to = "/home/nvinden/work/siamese/results/session3/results"
 dir_names = [name for name in os.listdir(path_to) if os.path.isdir(os.path.join(path_to, name))]
 
 all_info = list()
@@ -18,6 +18,9 @@ for dir in dir_names:
     scores = defaultdict(list)
     for k in range(5):
         path = os.path.join(path_to, dir, f"test_k{k}.csv")
+
+        if not os.path.isfile(path):
+            continue
 
         df = pd.read_csv(path, usecols = ["name1", "name2", "model_score", "label"])
         df = df.astype({"label": int, "name1": str, "name2": str, "model_score": float})

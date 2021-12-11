@@ -20,6 +20,9 @@ np.random.seed(41)
 torch.manual_seed(1608)
 random.seed(55)
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def train_full_k(save_name):
     for k in range(5):
@@ -27,7 +30,7 @@ def train_full_k(save_name):
 
 def train(save_name, k):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"CURRENT DEVICE: {device}")
+    print(f"CURRENT DEVICE: {device}", flush = True)
 
     save_file = os.path.join("saves", str(save_name) + "_k" + str(k))
     json_file = os.path.join("configs", str(save_name) + ".json")
@@ -55,11 +58,14 @@ def train(save_name, k):
     #preparing saving directory
     result_directory = os.path.join("results", save_name)
     if not os.path.isdir(result_directory):
-        os.mkdir(result_directory)
+        os.makedirs(result_directory, exist_ok=True)
     if not os.path.isdir(os.path.join(result_directory, "train")):
-        os.mkdir(os.path.join(result_directory, "train"))
+        os.makedirs(os.path.join(result_directory, "train"), exist_ok=True)
     if not os.path.isdir(os.path.join(result_directory, "val")):
-        os.mkdir(os.path.join(result_directory, "val"))
+        os.makedirs(os.path.join(result_directory, "val"), exist_ok=True)
+
+    types_string = ds.get_types_in_train_set()
+    print(types_string + "\n", flush = True)
 
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
@@ -112,13 +118,13 @@ def train(save_name, k):
             #ADDING TO DIAGNOSTICS
             total_epoch_loss += loss.item()
 
-        print(f"Epoch {epoch + 1}:")
+        print(f"Epoch {epoch + 1}:", flush = True)
 
         if data_save_condition:
             if not os.path.isdir(os.path.join(result_directory, "train", str(k))):
-                os.mkdir(os.path.join(result_directory, "train", str(k)))
+                os.makedirs(os.path.join(result_directory, "train", str(k)), exist_ok=True)
             if not os.path.isdir(os.path.join(result_directory, "val", str(k))):
-                os.mkdir(os.path.join(result_directory, "val", str(k)))
+                os.makedirs(os.path.join(result_directory, "val", str(k)), exist_ok=True)
 
             path_train = os.path.join(result_directory, "train", str(k), f"epoch{str(epoch).zfill(3)}.csv")
             path_val = os.path.join(result_directory, "val", str(k), f"epoch{str(epoch).zfill(3)}.csv")
@@ -133,8 +139,8 @@ def train(save_name, k):
                 f_score_val_best = f_score_val
                 best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
                 save_data(best_save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
-                print(f"Saved a new best with f-score")
-            print(f"F-Score: {f_score_val}")
+                print(f"Saved a new best with f-score", flush = True)
+            print(f"F-Score: {f_score_val}", flush = True)
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
 
@@ -142,24 +148,24 @@ def train(save_name, k):
 
         #PRINTING DIAGNOSTICS
         total_epoch_loss /= (batch_no + 1)
-        print(f"          Loss: {total_epoch_loss}")
+        print(f"          Loss: {total_epoch_loss}", flush = True)
+        types_string = ds.get_types_in_train_set()
+        print(types_string, flush = True)
 
         if embedding_condition:
-            print("Embedding...")
+            print("Embedding...", flush = True)
             ds.embeddings.embed_all(model)
-            print("Embedding done...")
+            print("Embedding done...", flush = True)
 
             print("Adding to dataset...")
             n_added, pairs_found, already_found = ds.add_to_dataset()
             ds.embeddings.embeddings = None
-            print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...")
+            print(f"{n_added} entries added, {pairs_found} pairs found, {already_found} already found...", flush = True)
+
+        print(f" TIME: {time.time() - start_time} seconds\n", flush = True)
 
 
-        print(f"trained on {total_pairs} pairs")
-        print(f" TIME: {time.time() - start_time} seconds\n")
-
-
-    print(f"Finished training {save_name} on k = {k}")
+    print(f"Finished training {save_name} on k = {k}", flush = True)
 
     #SAVING LIST ON BEST
     best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
@@ -167,7 +173,7 @@ def train(save_name, k):
     path_test = os.path.join(result_directory, f"test_k{k}.csv")
     f_score = save_list(best_model, ds, path_test, k, "test")
 
-    print(f"Finished testing with f-score of {f_score}")
+    print(f"Finished testing with f-score of {f_score}", flush = True)
 
     return 0, 0
 
@@ -266,7 +272,7 @@ def test_on_test_set(model, ds):
 def main():
     arg = sys.argv
     if len(arg) != 3:
-        print("Error: Must have 2 command line arguments")
+        print("Error: Must have 2 command line arguments", flush = True)
         return
     
     config_file = arg[1]
@@ -279,20 +285,20 @@ def main():
         if k_number < 0 or k_number > 4:
             raise Exception
     except Exception:
-        print("Error: config must be a string, and k must be an integer")
+        print("Error: config must be a string, and k must be an integer", flush = True)
         return
 
     log_file_name = "log.txt"
     debug = True
 
-    print("GPU Available: " + str(torch.cuda.is_available()))
+    print("GPU Available: " + str(torch.cuda.is_available()), flush = True)
 
     with open(log_file_name, "a") as log:
         start_time = time.time()
 
         train(config_file, k_number)
         text_out = f"{datetime.now()}\n{config_file}: training complete\nTime: {time.time() - start_time}"
-        print("\n" + text_out)
+        print("\n" + text_out, flush = True)
         log.write(text_out + "\n")
 
 

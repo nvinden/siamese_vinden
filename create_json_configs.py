@@ -5,7 +5,7 @@ import json
 
 session_number = 2
 
-sample_json = os.path.join("configs", "11_25.json")
+sample_json = os.path.join("configs", "run1_rat11_emb25.json")
 std_DATASET, std_TRAIN, std_MODEL = load_json_config(sample_json)
 
 if not os.path.isdir(os.path.join("configs", str(session_number))):
@@ -39,56 +39,44 @@ for hyp_combination in itertools.product(*hyperparam_list):
 
     n_pos = 25000
 
-    if run == "1":
-        DATASET["initial_random_negatives"] = int(1.0 * n_pos)
-        DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos)
+    DATASET["test_random_negatives"] = int(n_pos / (5 * 2))
+    DATASET["test_jeremy_negatives"] = int(n_pos / (5 * 2))
 
-        DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
+    if run == "1":
+        DATASET["initial_random_negatives"] = int(1.0 * n_pos / 5)
+        DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos / 5)
 
         TRAIN["active"] = False
         TRAIN["hard_neg_cap"] = int(0.0 * n_pos)
         DATASET['random_mutability'] = 0.0
         DATASET['jeremy_mutability'] = 0.0
     elif run == "2":
-        DATASET["initial_random_negatives"] = int(0.5 * n_pos)
-        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos)
-        
-        DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
+        DATASET["initial_random_negatives"] = int(0.5 * n_pos / 5)
+        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos / 5)
 
         TRAIN["active"] = False
         TRAIN["hard_neg_cap"] = int(0.0 * n_pos)
         DATASET['random_mutability'] = 0.0
         DATASET['jeremy_mutability'] = 0.0
     elif run == "3":
-        DATASET["initial_random_negatives"] = int(0.5 * n_pos)
-        DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos)
-
-        DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
+        DATASET["initial_random_negatives"] = int(0.5 * n_pos / 5)
+        DATASET["initial_jeremy_negatives"] = int(0.0 * n_pos / 5)
 
         TRAIN["active"] = True
         TRAIN["hard_neg_cap"] = int(0.6 * 0.5 * n_pos)
         DATASET['random_mutability'] = 0.0
         DATASET['jeremy_mutability'] = 0.0
     elif run == "4":
-        DATASET["initial_random_negatives"] = int(0.5 * n_pos)
-        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos)
-        
-        DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
+        DATASET["initial_random_negatives"] = int(0.5 * n_pos / 5)
+        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos / 5)
 
         TRAIN["active"] = True
         TRAIN["hard_neg_cap"] = int(0.6 * 0.5 * n_pos)
         DATASET['random_mutability'] = 0.5
         DATASET['jeremy_mutability'] = 0.5    
     elif run == "5":
-        DATASET["initial_random_negatives"] = int(0.5 * n_pos)
-        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos)
-        
-        DATASET["test_random_negatives"] = int(0.5 * n_pos)
-        DATASET["test_jeremy_negatives"] = int(0.5 * n_pos)
+        DATASET["initial_random_negatives"] = int(0.5 * n_pos / 5)
+        DATASET["initial_jeremy_negatives"] = int(0.5 * n_pos / 5)
 
         TRAIN["active"] = True
         TRAIN["hard_neg_cap"] = int(0.6 * 0.5 * n_pos)
