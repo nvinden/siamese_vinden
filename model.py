@@ -162,8 +162,8 @@ class Siamese(nn.Module):
         h_0 = h_0.view(self.batch_size, 2 * self.n_layers, self.hidden_dim)
         c_0 = c_0.view(self.batch_size, 2 * self.n_layers, self.hidden_dim)
 
-        h_0 = torch.permute(h_0, (1, 0, 2))
-        c_0 = torch.permute(c_0, (1, 0, 2))
+        h_0 = torch.permute(h_0, (1, 0, 2)).contiguous()
+        c_0 = torch.permute(c_0, (1, 0, 2)).contiguous()
 
         return h_0, c_0
 
