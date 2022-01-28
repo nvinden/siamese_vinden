@@ -9,7 +9,7 @@ import pandas as pd
 
 import os
 
-path_to = "/home/nvinden/work/siamese/results/session3/results"
+path_to = "results/"
 dir_names = [name for name in os.listdir(path_to) if os.path.isdir(os.path.join(path_to, name))]
 
 all_info = list()

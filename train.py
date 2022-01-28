@@ -78,7 +78,7 @@ def train(save_name, k):
         total_pairs = len(ds)
 
         data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
-        embedding_condition = (epoch % 10 == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] - 1 and TRAIN_CONFIG['active'] == True
+        embedding_condition = (epoch % TRAIN_CONFIG["hnm_period"] == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] - 1 and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
             model_dict = dict()
@@ -112,7 +112,7 @@ def train(save_name, k):
                 name2_list = [emb2str(i) for i in n1]
 
                 for n1, n2, mod, lab in zip(name1_list, name2_list, name_similarity, label):
-                    model_dict[dict_index] = {"name1": n1, "name2": n2, "model_score": mod.item(), "label": lab.item(), "k": k}
+                    model_dict[dict_index] = {"model_score": mod.item(), "label": lab.item()}
                     dict_index += 1
 
             #ADDING TO DIAGNOSTICS
@@ -212,7 +212,7 @@ def save_list(model, ds, save_name, k, set_type : str):
                 model_score = name_similarity[i].item()
                 curr_label = label[i].item()
 
-                model_dict[dict_index] = {"name1": name1, "name2": name2, "model_score": model_score, "label": curr_label, "k": k}
+                model_dict[dict_index] = {"model_score": model_score, "label": curr_label}
                 dict_index += 1
         
     ds.mode = original_mode

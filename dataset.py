@@ -143,6 +143,8 @@ class SiameseMasterDataset(Dataset):
 
 class PretrainDataset(Dataset):
     def __init__(self, config, reprocess : bool = False):
+        random.seed(160855)
+
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.data_root = config['data_root']
         self.string_pad = config['string_pad']

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from names_dataset import NameDataset
+
 import numpy as np
 
 import math
@@ -52,8 +54,34 @@ class Siamese(nn.Module):
 
         if self.A_name in ["lstm", "gru"] and self.bidirectional:
             self.bidirectional_linear = nn.Linear(self.n_tokens * 2 * self.hidden_dim, self.hidden_dim)
+            self.n_layers = model_kwargs["num_layers"]
         elif self.A_name in ["attention", ]:
             self.attention_linear = nn.Linear(self.input_dim * self.n_tokens, self.hidden_dim)
+        
+        self.preddef_on = False
+        if "predef_weights" in config and config['predef_weights'] == True:
+            self.preddef_on = True
+
+            self.nd = NameDataset()
+            country_list = self.nd.get_country_codes(alpha_2=False)
+            self.country2idx = {country.name : idx  for idx, country in enumerate(country_list)}
+
+            alpha_to_names = {count.alpha_2 : count.name for count in country_list}
+            test = self.nd.get_top_names(n = 20000, use_first_names = False)
+            self.n_names_per_country = {alpha_to_names[key]: len(value) for key, value in test.items()}
+
+            self.preddef_input_length = 2 * len(alpha_to_names)
+            self.preddef_linear = nn.Sequential(
+                nn.Linear(self.preddef_input_length, 1000),
+                nn.Sigmoid(),
+                nn.Linear(1000, 500),
+                nn.Sigmoid(),
+                nn.Linear(500, 250),
+                nn.Sigmoid(),
+                nn.Linear(250, 2 * 2 * self.n_layers * self.hidden_dim),
+                nn.Sigmoid()
+            )
+
 
     def generate_square_subsequent_mask(self, sz: int):
         return torch.triu(torch.ones(sz, sz, device = self.device) * float('-inf'), diagonal=1)
@@ -86,6 +114,59 @@ class Siamese(nn.Module):
 
     def cosine_similarity(self, h_0, h_1):
         return nn.functional.cosine_similarity(h_0, h_1)
+
+    def emb2str(self, emb):
+        word = ""
+        for char in emb:
+            char = char.item()
+            if char >= 30:
+                continue
+            word = word + chr(char + 97)
+        return word
+    
+    def create_predef_input(self, word1):
+        word1 = [self.emb2str(word) for word in word1]
+        search_components = [self.nd.search(word)['last_name'] for word in word1]
+
+        out = torch.full([len(word1), len(self.country2idx) * 2], -1.0, device = self.device, dtype = torch.float)
+
+        for i, batch in enumerate(search_components):
+            if batch is None:
+                continue
+
+            for country, value in batch['country'].items():
+                if value is None:
+                    continue
+                country_id = self.country2idx[country]
+                out[i, country_id] = value
+
+
+            for country, value in batch['rank'].items():
+                if value is None:
+                    continue
+                country_id = self.country2idx[country]
+                n_name_in_curr_country = self.n_names_per_country[country]
+                value = 1 - (value / n_name_in_curr_country)
+                out[i, country_id + len(self.country2idx)] = value
+
+        return out
+    
+    def predef_forward(self, inputs):
+        default_out = self.preddef_linear(inputs)
+
+        break_point = default_out.shape[1] // 2
+
+        h_0 = default_out[:, 0:break_point]
+        c_0 = default_out[:, break_point:]
+
+        h_0 = h_0.view(self.batch_size, 2 * self.n_layers, self.hidden_dim)
+        c_0 = c_0.view(self.batch_size, 2 * self.n_layers, self.hidden_dim)
+
+        h_0 = torch.permute(h_0, (1, 0, 2))
+        c_0 = torch.permute(c_0, (1, 0, 2))
+
+        return h_0, c_0
+
 
     def forward(self, seq0, *argv):
         self.batch_size = len(seq0)
@@ -121,11 +202,29 @@ class Siamese(nn.Module):
         #   Bidirectional lstm and gru functions
         #   Designed from https://aclanthology.org/W16-1617.pdf
         elif self.A_name in ["lstm", "gru"] and self.bidirectional:
-            h_0, _ = self.A_function(seq0_embedded)
+            if self.preddef_on:
+                seq0_predef_input = self.create_predef_input(seq0)
+                h_first, c_first = self.predef_forward(seq0_predef_input)
+                if self.A_name == "lstm":
+                    h_0, _ = self.A_function(seq0_embedded, (h_first, c_first))
+                elif self.A_name == "gru":
+                    h_0, _ = self.A_function(seq0_embedded, h_first)
+            else:
+                h_0, _ = self.A_function(seq0_embedded)
+
             h_0 = h_0.reshape(self.batch_size, -1)
             h_0_out = self.bidirectional_linear(h_0)
 
             if two_vars:
+                if self.preddef_on:
+                    seq1_predef_input = self.create_predef_input(seq1)
+                    h_first, c_first = self.predef_forward(seq1_predef_input)
+                    if self.A_name == "lstm":
+                        h_1, _ = self.A_function(seq1_embedded, (h_first, c_first))
+                    elif self.A_name == "gru":
+                        h_1, _ = self.A_function(seq1_embedded, h_first)
+                else:
+                    h_1, _ = self.A_function(seq0_embedded)
                 h_1, _ = self.A_function(seq1_embedded)
                 h_1 = h_1.reshape(self.batch_size, -1)
                 h_1_out = self.bidirectional_linear(h_1)

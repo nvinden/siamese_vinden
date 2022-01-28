@@ -1,0 +1,37 @@
+{
+    "DATASET_CONFIG": {
+        "partition_data_name": "emb25_rat11_lstm_bi1_lay4.json",
+        "data_root": "data/",
+        "string_pad": 30,
+        "k": 5,
+        "initial_random_negatives": 2500,
+        "initial_jeremy_negatives": 2500,
+        "test_random_negatives": 2500,
+        "test_jeremy_negatives": 2500,
+        "batch_size": 32,
+        "random_mutability": 0.5,
+        "jeremy_mutability": 0.5
+    },
+    "TRAIN_CONFIG": {
+        "lr": 0.0003,
+        "n_epochs": 300,
+        "epoch_reset": false,
+        "A_name": "lstm",
+        "embedding_type": "one_hot",
+        "n_tokens": 30,
+        "scheduler_step_size": 3,
+        "scheduler_gamma": 1,
+        "active": true,
+        "hard_neg_cap": 7500,
+        "hnm_period": 10
+    },
+    "MODEL_KWARGS": {
+        "input_size": 26,
+        "hidden_size": 25,
+        "num_layers": 4,
+        "bias": true,
+        "batch_first": true,
+        "dropout": 0,
+        "bidirectional": true
+    }
+}
