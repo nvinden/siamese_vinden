@@ -67,8 +67,6 @@ def train(save_name, k):
     types_string = ds.get_types_in_train_set()
     print(types_string + "\n", flush = True)
 
-    TRAIN_CONFIG["n_epochs"] = 1
-
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
         ds.mode = "train"
@@ -79,7 +77,7 @@ def train(save_name, k):
         total_epoch_loss = 0
         total_pairs = len(ds)
 
-        data_save_condition = True#((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
+        data_save_condition = ((epoch % 5 == 0) or epoch == TRAIN_CONFIG["n_epochs"] - 1) and epoch != 0
         embedding_condition = (epoch % TRAIN_CONFIG["hnm_period"] == 0) and epoch != 0 and epoch != TRAIN_CONFIG["n_epochs"] - 1 and TRAIN_CONFIG['active'] == True
 
         if data_save_condition:
