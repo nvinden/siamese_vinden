@@ -22,8 +22,8 @@ for dir in dir_names:
         if not os.path.isfile(path):
             continue
 
-        df = pd.read_csv(path, usecols = ["name1", "name2", "model_score", "label"])
-        df = df.astype({"label": int, "name1": str, "name2": str, "model_score": float})
+        df = pd.read_csv(path, usecols = ["model_score", "label"])
+        df = df.astype({"label": int, "model_score": float})
 
         label = df['label'].to_numpy().astype(np.int8)
         model_score = df['model_score'].to_numpy()

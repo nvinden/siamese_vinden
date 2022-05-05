@@ -67,7 +67,7 @@ for run_name in dir_name_list:
             pairs['dm2'] = [compare_dm2(x, y) for x, y in pairs[['name_a', 'name_b']].itertuples(index=False)]
 
             pairs['vowels_a'] = pairs['name_a'].apply(lambda x: sum(map(x.count, 'aeiou')))
-             pairs['vowels_b'] = pairs['name_b'].apply(lambda x: sum(map(x.count, 'aeiou')))
+            pairs['vowels_b'] = pairs['name_b'].apply(lambda x: sum(map(x.count, 'aeiou')))
             pairs['consonants_a'] = pairs['name_a'].str.len() - pairs['vowels_a']
             pairs['consonants_b'] = pairs['name_b'].str.len() - pairs['vowels_b']
             pairs['vowels'] = (pairs['vowels_a'] - pairs['vowels_b']).abs()
@@ -83,7 +83,6 @@ for run_name in dir_name_list:
 
         for test_fold_index in range(len(folds)):
             val_fold_index = test_fold_index - 1 if test_fold_index - 1 >= 0 else len(folds) - 1
-
 
             X_train = pd.DataFrame()
             y_train = pd.Series(dtype=bool)

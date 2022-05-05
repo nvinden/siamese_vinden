@@ -164,7 +164,6 @@ def train(save_name, k):
 
         print(f" TIME: {time.time() - start_time} seconds\n", flush = True)
 
-
     print(f"Finished training {save_name} on k = {k}", flush = True)
 
     #SAVING LIST ON BEST
@@ -212,7 +211,7 @@ def save_list(model, ds, save_name, k, set_type : str):
                 model_score = name_similarity[i].item()
                 curr_label = label[i].item()
 
-                model_dict[dict_index] = {"model_score": model_score, "label": curr_label}
+                model_dict[dict_index] = {"name1": name1, "name2": name2, "model_score": model_score, "label": curr_label}
                 dict_index += 1
         
     ds.mode = original_mode

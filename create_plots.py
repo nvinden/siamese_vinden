@@ -123,8 +123,11 @@ for dir_name in dir_name_list:
 
   teststr = f"Highest Val Score: {str(highest_f_score)[0:5]} @ epoch {highest_f_score_idx}\n"
   teststr = teststr + f"Test Score: {str(test_score)[0:5]}"
-
-  epoch_numbers.sort()
+  
+  zipped_data = zip(epoch_numbers, train_f_scores, val_f_scores)
+  sorted_pairs = sorted(zipped_data)
+  tuples = zip(*sorted_pairs)
+  epoch_numbers, train_f_scores, val_f_scores = [ list(tuple) for tuple in  tuples]
 
   plt.plot(epoch_numbers, train_f_scores, color = "red", label = "Train")
   plt.plot(epoch_numbers, val_f_scores, color = "blue", label = "Val")

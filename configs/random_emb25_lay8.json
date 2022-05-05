@@ -2,6 +2,7 @@
     "DATASET_CONFIG": {
         "partition_data_name": "random_emb25_lay8.json",
         "data_root": "data/",
+        "pair_file": "1800s_last_name_pairs",
         "string_pad": 30,
         "k": 5,
         "initial_random_negatives": 5000,

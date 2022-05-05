@@ -17,14 +17,15 @@ class SiamesePairsDataset(Dataset):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.data_root = config['data_root']
         self.string_pad = config['string_pad']
+        self.pair_file = config["pair_file"]
         self.table = list()
 
-        unprocessed_pair_file_path = os.path.join(self.data_root, "records25k_data.tsv")
-        processed_pair_file_path = os.path.join(self.data_root, "records25k_data_processed.pt")
+        unprocessed_pair_file_path = os.path.join(self.data_root, self.pair_file + ".tsv")
+        processed_pair_file_path = os.path.join(self.data_root, self.pair_file + "_processed.pt")
         #Reprosses records25k_data into records25k_data_processed
         if not os.path.isfile(processed_pair_file_path) or reprocess == True:
             with open(unprocessed_pair_file_path) as fd:
-                reader = csv.reader(fd, delimiter="\t", quotechar='"')
+                reader = csv.reader(fd, delimiter = "\t", quotechar='"')
                 for line in reader:
                     pair = line[:2]
 
@@ -201,7 +202,9 @@ class RDataset(Dataset):
         ds_master_pair_config = {
             "data_root": config["data_root"],
             "string_pad": config["string_pad"],
+            "pair_file": config["pair_file"]
         }
+
         self.pair_dataset = SiamesePairsDataset(ds_master_pair_config)
         self.master_dataset = SiameseMasterDataset(ds_master_pair_config)
 
@@ -221,6 +224,9 @@ class RDataset(Dataset):
 
         self.partitions = dict()
         self.partitions["positives"] = [self.pair_dataset.table[i:i + self.k_length] for i in range(0, self.pair_length, self.k_length)]
+
+        if len(self.partitions["positives"]) > self.k:
+            self.partitions["positives"].pop()
 
         self.master_cart_product_length = len(self.master_dataset) ** 2
 
