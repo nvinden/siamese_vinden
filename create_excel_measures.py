@@ -47,6 +47,8 @@ for dir in dir_names:
         yp = (model_score >= threshold).astype(bool)
         yt = label.astype(bool)
 
+        scores['threshold'] = threshold
+
         scores['tp'].append(np.count_nonzero(yt & yp))
         scores['tn'].append(np.count_nonzero(np.logical_not(yt) & np.logical_not(yp)))
         scores['fp'].append(np.count_nonzero(np.logical_not(yt) & yp))
