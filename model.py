@@ -224,7 +224,7 @@ class Siamese(nn.Module):
                     elif self.A_name == "gru":
                         h_1, _ = self.A_function(seq1_embedded, h_first)
                 else:
-                    h_1, _ = self.A_function(seq0_embedded)
+                    h_1, _ = self.A_function(seq1_embedded)
                 h_1, _ = self.A_function(seq1_embedded)
                 h_1 = h_1.reshape(self.batch_size, -1)
                 h_1_out = self.bidirectional_linear(h_1)
@@ -246,7 +246,8 @@ class Siamese(nn.Module):
 
         if two_vars:
             distance = self.cosine_similarity(h_0_out, h_1_out)
-            
+            distance = (distance + 1) / 2
+
             return distance, (h_0_out, h_1_out)
         else:
             return h_0_out

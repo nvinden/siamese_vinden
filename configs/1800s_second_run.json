@@ -26,8 +26,7 @@
         "scheduler_gamma": 1,
         "active": false,
         "hard_neg_cap": 15000,
-        "hnm_period": 20,
-        "predef_weights": true
+        "hnm_period": 20
     },
     "MODEL_KWARGS": {
         "input_size": 26,

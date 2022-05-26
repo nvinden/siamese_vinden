@@ -3,6 +3,7 @@
         "partition_data_name": "edit_emb20_lay8.json",
         "data_root": "data/",
         "string_pad": 30,
+        "pair_file": "records25k_data",
         "k": 5,
         "initial_random_negatives": 5000,
         "initial_jeremy_negatives": 5000,
@@ -26,7 +27,7 @@
         "active": false,
         "hard_neg_cap": 15000,
         "hnm_period": 20,
-        "predef_weights": true
+        "predef_weights": false
     },
     "MODEL_KWARGS": {
         "input_size": 26,

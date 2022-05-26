@@ -16,6 +16,7 @@ all_info = list()
 
 for dir in dir_names:
     scores = defaultdict(list)
+    threshold_list = []
     for k in range(5):
         path = os.path.join(path_to, dir, f"test_k{k}.csv")
 
@@ -47,7 +48,7 @@ for dir in dir_names:
         yp = (model_score >= threshold).astype(bool)
         yt = label.astype(bool)
 
-        scores['threshold'] = threshold
+        threshold_list.append(threshold)
 
         scores['tp'].append(np.count_nonzero(yt & yp))
         scores['tn'].append(np.count_nonzero(np.logical_not(yt) & np.logical_not(yp)))
@@ -56,6 +57,8 @@ for dir in dir_names:
 
     temp = {k: mean(v) for k, v in scores.items()}
     temp["name"] = dir
+    for i, threshold in enumerate(threshold_list):
+        temp[f"t{i}"] = threshold
     all_info.append(temp)
 
 df = pd.DataFrame(all_info)
