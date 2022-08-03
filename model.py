@@ -4,6 +4,9 @@ import torch.nn.functional as F
 
 from names_dataset import NameDataset
 
+from metaphone import doublemetaphone
+import jellyfish
+
 import numpy as np
 
 import math
@@ -19,12 +22,10 @@ class Siamese(nn.Module):
         self.embedding_type = config["embedding_type"]
         self.n_tokens = config["n_tokens"]
 
-        self.START = 30
-        self.END = 31
-        self.PAD = 32
-
         assert self.A_name in ["lstm", "gru", "attention"]
         assert self.embedding_type in ["one_hot", "normal"]
+
+        self.phonetic_method = config["phonetic_method"] if "phonetic_method" in config else "none"
 
         if self.A_name in ["lstm", "gru"]:
             self.bidirectional = model_kwargs["bidirectional"]
@@ -53,10 +54,17 @@ class Siamese(nn.Module):
             self.mask = self.generate_square_subsequent_mask(self.n_tokens)
 
         if self.A_name in ["lstm", "gru"] and self.bidirectional:
-            self.bidirectional_linear = nn.Linear(self.n_tokens * 2 * self.hidden_dim, self.hidden_dim)
+            if self.phonetic_method == "none":
+                self.bidirectional_linear = nn.Linear(self.n_tokens * 2 * self.hidden_dim, self.hidden_dim)
+            else:
+                self.bidirectional_linear = nn.Linear((2 * self.n_tokens + 1) * 2 * self.hidden_dim, self.hidden_dim)
             self.n_layers = model_kwargs["num_layers"]
         elif self.A_name in ["attention", ]:
             self.attention_linear = nn.Linear(self.input_dim * self.n_tokens, self.hidden_dim)
+
+        self.START = self.input_dim
+        self.END = self.input_dim + 1
+        self.PAD = self.input_dim + 2
         
         self.preddef_on = False
         if "predef_weights" in config and config['predef_weights'] == True:
@@ -81,7 +89,6 @@ class Siamese(nn.Module):
                 nn.Linear(250, 2 * 2 * self.n_layers * self.hidden_dim),
                 nn.Sigmoid()
             )
-
 
     def generate_square_subsequent_mask(self, sz: int):
         return torch.triu(torch.ones(sz, sz, device = self.device) * float('-inf'), diagonal=1)
@@ -123,6 +130,21 @@ class Siamese(nn.Module):
                 continue
             word = word + chr(char + 97)
         return word
+
+    def str2emb(self, string, string_pad = 30):
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        torch_table = torch.full(size = (string_pad, ), fill_value = self.PAD, device = device, dtype = torch.uint8)
+        torch_table[0] = self.START
+        for j in range(1, len(string) + 1):
+            cha = string[j - 1]
+            if cha.isdigit():
+                torch_table[j] = int(cha) + 26
+            else:
+                torch_table[j] = ord(cha) - 97
+        j += 1
+        torch_table[j] = self.END
+
+        return torch_table
     
     def create_predef_input(self, word1):
         word1 = [self.emb2str(word) for word in word1]
@@ -139,7 +161,6 @@ class Siamese(nn.Module):
                     continue
                 country_id = self.country2idx[country]
                 out[i, country_id] = value
-
 
             for country, value in batch['rank'].items():
                 if value is None:
@@ -167,6 +188,22 @@ class Siamese(nn.Module):
 
         return h_0, c_0
 
+    def get_phonetic(self, seq, method):
+        words = [self.emb2str(emb) for emb in seq]
+        
+        if method == 'soundex':
+            phonetic_list = [jellyfish.soundex(word).lower() for word in words]
+        elif method == 'metaphone':
+            phonetic_list = [doublemetaphone(word)[0].lower() for word in words]
+        else:
+            print("this is an error if you reach here")
+            return None
+
+        phonetic_emb_list = [self.str2emb(word) for word in phonetic_list]
+        phonetic_emb_list = torch.stack(phonetic_emb_list, dim = 0)
+        phonetic_full_emb = self.embedding_function(phonetic_emb_list)
+
+        return phonetic_full_emb
 
     def forward(self, seq0, *argv):
         self.batch_size = len(seq0)
@@ -180,9 +217,17 @@ class Siamese(nn.Module):
 
         seq0_embedded = self.embedding_function(seq0)
 
+        if self.phonetic_method != "none":
+            seq0_phonetic = self.get_phonetic(seq0, self.phonetic_method)
+            seq0_embedded = torch.cat([seq0_embedded, torch.ones([seq0_embedded.shape[0], 1, self.input_dim], device = self.device), seq0_phonetic], dim = 1)
+
         if two_vars:
             assert len(seq0) == len(seq1)
             seq1_embedded = self.embedding_function(seq1)
+
+            if self.phonetic_method != "none":
+                seq1_phonetic = self.get_phonetic(seq1, self.phonetic_method)
+                seq1_embedded = torch.cat([seq1_embedded, torch.ones([seq1_embedded.shape[0], 1, self.input_dim], device = self.device), seq1_phonetic], dim = 1)
 
         #TAKES EMBEDDED SEQUENCES AND TURNS THEM INTO 2 SIMILARITY VECTORS
         #   Normal lstm and gru functions

@@ -1,6 +1,6 @@
 {
     "DATASET_CONFIG": {
-        "partition_data_name": "edit_emb20_lay8.json",
+        "partition_data_name": "gru_metaphone.json",
         "data_root": "data/",
         "string_pad": 30,
         "pair_file": "records25k_data",
@@ -17,9 +17,9 @@
     },
     "TRAIN_CONFIG": {
         "lr": 0.0003,
-        "n_epochs": 300,
+        "n_epochs": 125,
         "epoch_reset": false,
-        "A_name": "lstm",
+        "A_name": "gru",
         "embedding_type": "one_hot",
         "n_tokens": 30,
         "scheduler_step_size": 3,
@@ -27,11 +27,12 @@
         "active": false,
         "hard_neg_cap": 15000,
         "hnm_period": 20,
-        "predef_weights": false
+        "predef_weights": false,
+        "phonetic_method": "metaphone"
     },
     "MODEL_KWARGS": {
-        "input_size": 26,
-        "hidden_size": 20,
+        "input_size": 36,
+        "hidden_size": 25,
         "num_layers": 8,
         "bias": true,
         "batch_first": true,
