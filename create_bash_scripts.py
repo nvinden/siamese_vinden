@@ -1,6 +1,6 @@
 import os
 
-path_to = "/home/nvinden/work/siamese/configs"
+path_to = "/home/nick/Projects/Research/siamese_vinden/configs"
 dir_names = [name for name in os.listdir(path_to) if os.path.isfile(os.path.join(path_to, name))]
 
 for name in dir_names:

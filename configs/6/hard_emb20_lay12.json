@@ -12,7 +12,8 @@
         "random_mutability": 0.0,
         "jeremy_mutability": 1.0,
         "active": true,
-        "predef_weights": false
+        "predef_weights": false,
+        "pair_file": "records25k_data"
     },
     "TRAIN_CONFIG": {
         "lr": 0.0003,

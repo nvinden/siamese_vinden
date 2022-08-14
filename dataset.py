@@ -199,6 +199,9 @@ class RDataset(Dataset):
         data_root = config["data_root"]
         self.data_root = data_root
 
+        if "pair_file" not in config:
+            config["pair_file"] = "records25k_data"
+
         ds_master_pair_config = {
             "data_root": config["data_root"],
             "string_pad": config["string_pad"],
@@ -216,6 +219,8 @@ class RDataset(Dataset):
         else:
             self.pair_dict = self._build_pair_dict()
             np.save(pair_dict_save, self.pair_dict) 
+
+        self.training_phase = config['training_phase'] if 'training_phase' in config else 1
 
         #CREATING TRAINING AND TEST SPLITS ON KTH PARTITION
         self.pair_length = len(self.pair_dataset)
@@ -259,24 +264,25 @@ class RDataset(Dataset):
             m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
             self.test_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2}) 
 
-        self.val_ds = list()        
-        for i, row in enumerate(ini["positives"][val_kth]):
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0, "type": 0})
-        for i, row in enumerate(ini["random"][val_kth]):
-            if i >= self.test_random_negatives:
-                break
-            m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 1})
-        for i, row in enumerate(ini["jeremy"][val_kth]):
-            if i >= self.test_jeremy_negatives:
-                break
-            m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
-            self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2}) 
+        self.val_ds = list()
+        if self.training_phase == 1:    
+            for i, row in enumerate(ini["positives"][val_kth]):
+                self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 1.0, "mutable": 0, "type": 0})
+            for i, row in enumerate(ini["random"][val_kth]):
+                if i >= self.test_random_negatives:
+                    break
+                m = 0 if i / self.test_random_negatives >= self.random_mutability else 1
+                self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 1})
+            for i, row in enumerate(ini["jeremy"][val_kth]):
+                if i >= self.test_jeremy_negatives:
+                    break
+                m = 0 if i / self.test_jeremy_negatives >= self.jeremy_mutability else 1
+                self.val_ds.append({"emb0": row[0], "emb1": row[1], "label": 0.0, "mutable": m, "type": 2})
 
         #creating train set
         self.train_ds = list()
         for k_no in range(self.k):
-            if k_no == kth or k_no == val_kth:
+            if k_no == kth or (k_no == val_kth and self.training_phase == 1):
                 continue
 
             for i, row in enumerate(ini["positives"][k_no]):

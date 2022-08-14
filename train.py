@@ -69,6 +69,7 @@ def train(save_name, k):
 
     #training loop
     for epoch in range(start_epoch, TRAIN_CONFIG["n_epochs"]):
+
         ds.mode = "train"
         model.train()
         model.requires_grad_()
@@ -134,13 +135,14 @@ def train(save_name, k):
             df.to_csv(path_train)
 
             # Run on test set as well
-            f_score_val = save_list(model, ds, path_val, k, "val")
-            if f_score_val > f_score_val_best:
-                f_score_val_best = f_score_val
-                best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
-                save_data(best_save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
-                print(f"Saved a new best with f-score", flush = True)
-            print(f"F-Score: {f_score_val}", flush = True)
+            if len(ds.val_ds) > 0:
+                f_score_val = save_list(model, ds, path_val, k, "val")
+                if f_score_val > f_score_val_best:
+                    f_score_val_best = f_score_val
+                    best_save_file = os.path.join("saves", str(save_name) + "_k" + str(k) + "_BEST")
+                    save_data(best_save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
+                    print(f"Saved a new best with f-score", flush = True)
+                print(f"F-Score: {f_score_val}", flush = True)
 
             save_data(save_file, epoch + 1, model, optim, scheduler, log_list, ds, f_score_val_best)
 

@@ -13,7 +13,8 @@
         "random_mutability": 0.0,
         "jeremy_mutability": 1.0,
         "active": false,
-        "predef_weights": false
+        "predef_weights": false,
+        "training_phase": 2
     },
     "TRAIN_CONFIG": {
         "lr": 0.0003,

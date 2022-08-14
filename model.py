@@ -134,6 +134,11 @@ class Siamese(nn.Module):
     def str2emb(self, string, string_pad = 30):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         torch_table = torch.full(size = (string_pad, ), fill_value = self.PAD, device = device, dtype = torch.uint8)
+        
+        if len(string) == 0:
+            torch_table[0] = self.START
+            torch_table[1] = self.END
+
         torch_table[0] = self.START
         for j in range(1, len(string) + 1):
             cha = string[j - 1]
